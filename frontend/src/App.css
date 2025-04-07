@@ -1,0 +1,38 @@
+.crypto-btn {
+  background-color: #198754;
+  color: white;
+  padding: 10px 30px;
+  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
+  min-width: 140px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 0 transparent;
+}
+
+.crypto-btn:hover {
+  background-color: #20c997;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(32, 201, 151, 0.3);
+}
+
+.active-btn {
+  background-color: #3fa557 !important;   
+  box-shadow: 0 0 20px rgba(72, 239, 168, 0.5);
+  border: 2px solid #b9fbc0;
+}
+
+.animate {
+  animation: pulse 0.4s ease;
+}
+
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}

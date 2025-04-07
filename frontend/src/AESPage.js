@@ -26,28 +26,21 @@ export default function AESPage() {
 
   return (
     <div className="container mt-4">
-      <h1 className="text-center text-light mb-4">AES - Advanced Encryption Standard</h1>
+      <h1 className="text-center text-light mb-2">AES - Advanced Encryption Standard</h1>
+      <p className="text-center text-secondary mb-4">
+        AES is a symmetric block cipher standardized by NIST, widely used to secure data using 128-bit, 192-bit, or 256-bit encryption keys.
+      </p>
       <div className="row">
         <div className="col-md-6 border-end">
           <h3 className="text-success mb-3">Encrypt</h3>
-          <input
-            className="form-control mb-3"
-            placeholder="Enter plaintext"
-            value={plaintext}
-            onChange={(e) => setPlaintext(e.target.value)}
-          />
+          <input className="form-control mb-3" placeholder="Enter plaintext" value={plaintext} onChange={e => setPlaintext(e.target.value)} />
           <button className="btn btn-success mb-3" onClick={encrypt}>Encrypt</button>
           <div><strong>Ciphertext:</strong> <code>{ciphertext}</code></div>
         </div>
 
         <div className="col-md-6">
           <h3 className="text-warning mb-3">Decrypt</h3>
-          <input
-            className="form-control mb-3"
-            placeholder="Enter ciphertext"
-            value={ciphertext}
-            onChange={(e) => setCiphertext(e.target.value)}
-          />
+          <input className="form-control mb-3" placeholder="Enter ciphertext" value={ciphertext} onChange={e => setCiphertext(e.target.value)} />
           <button className="btn btn-warning mb-3" onClick={decrypt}>Decrypt</button>
           <div><strong>Decrypted Text:</strong> <code>{decryptedText}</code></div>
         </div>

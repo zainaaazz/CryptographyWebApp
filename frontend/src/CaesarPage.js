@@ -34,6 +34,10 @@ export default function CaesarPage() {
   return (
     <div className="container mt-4">
       <h1 className="text-center text-light mb-4">Caesar Cipher</h1>
+      <p className="text-center text-secondary mb-4">
+  The Caesar cipher is a simple substitution cipher that shifts each letter in the plaintext by a fixed number of positions in the alphabet.
+</p>
+
       <div className="row">
         <div className="col-md-6 border-end">
           <h3 className="text-success mb-3">Encrypt</h3>

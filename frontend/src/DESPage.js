@@ -27,6 +27,10 @@ export default function DESPage() {
   return (
     <div className="container mt-4">
       <h1 className="text-center text-light mb-4">DES - Data Encryption Standard</h1>
+      <p className="text-center text-secondary mb-4">
+  DES is an older symmetric-key block cipher that encrypts data in 64-bit blocks using a 56-bit key. It laid the foundation for modern encryption.
+</p>
+
       <div className="row">
         <div className="col-md-6 border-end">
           <h3 className="text-success mb-3">Encrypt</h3>

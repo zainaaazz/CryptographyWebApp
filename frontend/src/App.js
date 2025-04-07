@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react
 import AESPage from "./AESPage";
 import DESPage from "./DESPage";
 import CaesarPage from "./CaesarPage";
+
 import { Lock, ShieldCheck, KeyRound } from "lucide-react"; // icons
+import Header from './Header'; 
 import './App.css';
 
 function NavButtons() {
@@ -33,6 +35,7 @@ function NavButtons() {
 export default function App() {
   return (
     <Router>
+       <Header /> 
       <div className="min-vh-100 bg-dark text-white d-flex flex-column justify-content-center align-items-center p-4">
         <h1 className="display-4 mb-4">CRYPTOGRAPHY PROJECT</h1>
         <p className="lead mb-4">Choose an encryption algorithm:</p>

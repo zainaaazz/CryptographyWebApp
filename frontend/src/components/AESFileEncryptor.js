@@ -64,7 +64,27 @@ export default function AESFileEncryptor() {
       {error && <div className="alert alert-danger">{error}</div>}
 
       <input type="file" className="form-control mb-3" onChange={handleUpload} />
-      <input type="text" className="form-control mb-3" placeholder="Enter 16-character AES key" value={key} onChange={(e) => setKey(e.target.value)} />
+
+      <div className="input-group mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Enter 16-character AES key"
+          value={key}
+          onChange={(e) => setKey(e.target.value)}
+        />
+        <button
+          className="btn btn-success"
+          type="button"
+          onClick={() => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            const randomKey = Array.from({ length: 16 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+            setKey(randomKey);
+          }}
+        >
+          🔐 Generate
+        </button>
+      </div>
 
       <div className="d-flex gap-3 mb-3">
         <button className="btn btn-outline-success" onClick={() => encryptOrDecrypt('encrypt')}>Encrypt File</button>

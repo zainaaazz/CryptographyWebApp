@@ -64,13 +64,27 @@ export default function DESFileEncryptor() {
       {error && <div className="alert alert-danger">{error}</div>}
 
       <input type="file" className="form-control mb-3" onChange={handleFileChange} />
-      <input
-        type="text"
-        className="form-control mb-3"
-        placeholder="Enter 24-character DES key"
-        value={key}
-        onChange={(e) => setKey(e.target.value)}
-      />
+      <div className="input-group mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Enter 24-character DES key"
+          value={key}
+          onChange={(e) => setKey(e.target.value)}
+        />
+        <button
+          className="btn btn-success"
+          type="button"
+          onClick={() => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            const randomKey = Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+            setKey(randomKey);
+          }}
+        >
+          🔐 Generate
+        </button>
+      </div>
+
 
       <div className="d-flex gap-2 mb-3">
         <button className="btn btn-outline-success" onClick={() => handleEncryptOrDecrypt('encrypt')}>

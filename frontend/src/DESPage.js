@@ -32,6 +32,12 @@ export default function DESPage() {
     }
   };
 
+  const generateKey = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const randomKey = Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    setKey(randomKey);
+  };
+
   return (
     <div className="container mt-4">
       <h1 className="text-light text-center">DES - Data Encryption Standard</h1>
@@ -40,22 +46,15 @@ export default function DESPage() {
       </p>
 
       <div className="d-flex justify-content-center mb-4">
-  <div className="btn-group">
-    <button
-      className={`btn ${activeTab === 'text' ? 'btn-success' : 'btn-outline-success'}`}
-      onClick={() => setActiveTab('text')}
-    >
-      Text Encryption
-    </button>
-    <button
-      className={`btn ${activeTab === 'file' ? 'btn-success' : 'btn-outline-success'}`}
-      onClick={() => setActiveTab('file')}
-    >
-      File Encryption
-    </button>
-  </div>
-</div>
-
+        <div className="btn-group">
+          <button className={`btn ${activeTab === 'text' ? 'btn-success' : 'btn-outline-success'}`} onClick={() => setActiveTab('text')}>
+            Text Encryption
+          </button>
+          <button className={`btn ${activeTab === 'file' ? 'btn-success' : 'btn-outline-success'}`} onClick={() => setActiveTab('file')}>
+            File Encryption
+          </button>
+        </div>
+      </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
 
@@ -64,7 +63,12 @@ export default function DESPage() {
           <div className="col-md-6 border-end">
             <h4 className="text-success">Encrypt</h4>
             <input className="form-control mb-2" placeholder="Plaintext" value={plaintext} onChange={e => setPlaintext(e.target.value)} />
-            <input className="form-control mb-3" placeholder="24-char key" value={key} onChange={e => setKey(e.target.value)} />
+
+            <div className="input-group mb-3">
+              <input className="form-control" placeholder="24-char key" value={key} onChange={e => setKey(e.target.value)} />
+              <button className="btn btn-success" onClick={generateKey}>🔐 Generate</button>
+            </div>
+
             <button className="btn btn-success" onClick={encryptText}>Encrypt</button>
             <p className="mt-3"><strong>Ciphertext:</strong> <code>{ciphertext}</code></p>
           </div>
@@ -72,7 +76,12 @@ export default function DESPage() {
           <div className="col-md-6">
             <h4 className="text-warning">Decrypt</h4>
             <input className="form-control mb-2" placeholder="Ciphertext" value={ciphertext} onChange={e => setCiphertext(e.target.value)} />
-            <input className="form-control mb-3" placeholder="24-char key" value={key} onChange={e => setKey(e.target.value)} />
+
+            <div className="input-group mb-3">
+              <input className="form-control" placeholder="24-char key" value={key} onChange={e => setKey(e.target.value)} />
+              <button className="btn btn-success" onClick={generateKey}>🔐 Generate</button>
+            </div>
+
             <button className="btn btn-warning" onClick={decryptText}>Decrypt</button>
             <p className="mt-3"><strong>Decrypted:</strong> <code>{decryptedText}</code></p>
           </div>

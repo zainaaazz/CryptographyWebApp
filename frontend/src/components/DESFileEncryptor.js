@@ -7,6 +7,7 @@ export default function DESFileEncryptor() {
   const [error, setError] = useState('');
   const [downloadUrl, setDownloadUrl] = useState(null);
   const [downloadName, setDownloadName] = useState('');
+  const [loading, setLoading] = useState(false); // NEW: Progress bar control
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -24,6 +25,7 @@ export default function DESFileEncryptor() {
     formData.append('key', key);
 
     try {
+      setLoading(true); // Start progress bar
       const response = await axios.post(`http://localhost:5000/${action}-file/des`, formData, {
         responseType: 'blob',
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -33,7 +35,6 @@ export default function DESFileEncryptor() {
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
 
-      // Create custom filename
       const fileNameParts = file.name.split('.');
       const baseName = fileNameParts.slice(0, -1).join('.') || file.name;
       const extension = fileNameParts.length > 1 ? '.' + fileNameParts.pop() : '';
@@ -43,6 +44,8 @@ export default function DESFileEncryptor() {
       setError('');
     } catch {
       setError('Failed to process file.');
+    } finally {
+      setLoading(false); // Stop progress bar
     }
   };
 
@@ -77,6 +80,17 @@ export default function DESFileEncryptor() {
           Decrypt File
         </button>
       </div>
+
+      {loading && (
+        <div className="progress mb-3">
+          <div
+            className="progress-bar progress-bar-striped progress-bar-animated bg-success"
+            style={{ width: '100%' }}
+          >
+            Processing...
+          </div>
+        </div>
+      )}
 
       {downloadUrl && (
         <button className="btn btn-primary" onClick={handleDownload}>

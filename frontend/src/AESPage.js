@@ -34,15 +34,27 @@ export default function AESPage() {
 
   return (
     <div className="container mt-4">
-      <h1 className="text-light">AES - Advanced Encryption Standard</h1>
+      <h1 className="text-light text-center">AES - Advanced Encryption Standard</h1>
       <p className="text-secondary text-center">
         AES uses a symmetric 16-character key for secure data encryption (128-bit).
       </p>
 
-      <div className="btn-group mb-4">
-        <button className={`btn ${activeTab === 'text' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setActiveTab('text')}>Text Encryption</button>
-        <button className={`btn ${activeTab === 'file' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setActiveTab('file')}>File Encryption</button>
-      </div>
+      <div className="d-flex justify-content-center mb-4">
+  <div className="btn-group">
+    <button
+      className={`btn ${activeTab === 'text' ? 'btn-success' : 'btn-outline-success'}`}
+      onClick={() => setActiveTab('text')}
+    >
+      Text Encryption
+    </button>
+    <button
+      className={`btn ${activeTab === 'file' ? 'btn-success' : 'btn-outline-success'}`}
+      onClick={() => setActiveTab('file')}
+    >
+      File Encryption
+    </button>
+  </div>
+</div>
 
       {error && <div className="alert alert-danger">{error}</div>}
 

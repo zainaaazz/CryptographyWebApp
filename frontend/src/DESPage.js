@@ -34,15 +34,28 @@ export default function DESPage() {
 
   return (
     <div className="container mt-4">
-      <h1 className="text-light">DES - Data Encryption Standard</h1>
+      <h1 className="text-light text-center">DES - Data Encryption Standard</h1>
       <p className="text-secondary text-center">
         DES uses a 24-character key with Triple-DES encryption to secure sensitive data.
       </p>
 
-      <div className="btn-group mb-4">
-        <button className={`btn ${activeTab === 'text' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setActiveTab('text')}>Text Encryption</button>
-        <button className={`btn ${activeTab === 'file' ? 'btn-primary' : 'btn-outline-primary'}`} onClick={() => setActiveTab('file')}>File Encryption</button>
-      </div>
+      <div className="d-flex justify-content-center mb-4">
+  <div className="btn-group">
+    <button
+      className={`btn ${activeTab === 'text' ? 'btn-success' : 'btn-outline-success'}`}
+      onClick={() => setActiveTab('text')}
+    >
+      Text Encryption
+    </button>
+    <button
+      className={`btn ${activeTab === 'file' ? 'btn-success' : 'btn-outline-success'}`}
+      onClick={() => setActiveTab('file')}
+    >
+      File Encryption
+    </button>
+  </div>
+</div>
+
 
       {error && <div className="alert alert-danger">{error}</div>}
 

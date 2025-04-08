@@ -93,9 +93,10 @@ export default function DESFileEncryptor() {
       )}
 
       {downloadUrl && (
-        <button className="btn btn-primary" onClick={handleDownload}>
-          Download Result
-        </button>
+       <button className="btn btn-success" onClick={handleDownload}>
+       Download Result
+     </button>
+     
       )}
     </div>
   );

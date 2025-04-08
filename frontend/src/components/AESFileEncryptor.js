@@ -5,10 +5,12 @@ export default function AESFileEncryptor() {
   const [key, setKey] = useState('');
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
-  const [downloadUrl, setDownloadUrl] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState(null);
+  const [downloadName, setDownloadName] = useState('');
 
   const handleUpload = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
   };
 
   const encryptOrDecrypt = async (action) => {
@@ -30,10 +32,27 @@ export default function AESFileEncryptor() {
       const blob = new Blob([response.data]);
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
+
+      // Create a custom filename
+      const fileNameParts = file.name.split('.');
+      const baseName = fileNameParts.slice(0, -1).join('.') || file.name;
+      const extension = fileNameParts.length > 1 ? '.' + fileNameParts.pop() : '';
+      const label = action === 'encrypt' ? 'AESEncrypted' : 'AESDecrypted';
+      setDownloadName(`${baseName} - ${label}${extension}`);
+
       setError('');
     } catch (err) {
       setError('Failed to process file.');
     }
+  };
+
+  const handleDownload = () => {
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = downloadName;
+    a.click();
+    URL.revokeObjectURL(downloadUrl);
+    setDownloadUrl(null); // Hide button after download
   };
 
   return (
@@ -65,9 +84,9 @@ export default function AESFileEncryptor() {
       </div>
 
       {downloadUrl && (
-        <a href={downloadUrl} download className="btn btn-primary">
+        <button className="btn btn-primary" onClick={handleDownload}>
           Download Result
-        </a>
+        </button>
       )}
     </div>
   );

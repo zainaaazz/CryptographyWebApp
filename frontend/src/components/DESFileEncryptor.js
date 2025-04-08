@@ -5,9 +5,13 @@ export default function DESFileEncryptor() {
   const [key, setKey] = useState('');
   const [file, setFile] = useState(null);
   const [error, setError] = useState('');
-  const [downloadUrl, setDownloadUrl] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState(null);
+  const [downloadName, setDownloadName] = useState('');
 
-  const handleFileChange = (e) => setFile(e.target.files[0]);
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    setFile(selectedFile);
+  };
 
   const handleEncryptOrDecrypt = async (action) => {
     if (!file || key.length !== 24) {
@@ -28,10 +32,27 @@ export default function DESFileEncryptor() {
       const blob = new Blob([response.data]);
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
+
+      // Create custom filename
+      const fileNameParts = file.name.split('.');
+      const baseName = fileNameParts.slice(0, -1).join('.') || file.name;
+      const extension = fileNameParts.length > 1 ? '.' + fileNameParts.pop() : '';
+      const label = action === 'encrypt' ? 'DESEncrypted' : 'DESDecrypted';
+      setDownloadName(`${baseName} - ${label}${extension}`);
+
       setError('');
     } catch {
       setError('Failed to process file.');
     }
+  };
+
+  const handleDownload = () => {
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = downloadName;
+    a.click();
+    URL.revokeObjectURL(downloadUrl);
+    setDownloadUrl(null); // Hide button after download
   };
 
   return (
@@ -58,9 +79,9 @@ export default function DESFileEncryptor() {
       </div>
 
       {downloadUrl && (
-        <a href={downloadUrl} className="btn btn-primary" download>
+        <button className="btn btn-primary" onClick={handleDownload}>
           Download Result
-        </a>
+        </button>
       )}
     </div>
   );

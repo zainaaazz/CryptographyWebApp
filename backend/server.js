@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const multer = require('multer');
-const CryptoJS = require('crypto-js');
+const express = require("express");
+const cors = require("cors");
+const multer = require("multer");
+const CryptoJS = require("crypto-js");
 
 const app = express();
 const port = 5000;
@@ -13,27 +13,28 @@ const upload = multer();
 
 /* ---------------- AES ---------------- */
 
-app.post('/encrypt/aes', (req, res) => {
+app.post("/encrypt/aes", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || key.length !== 16)
-    return res.status(400).json({ error: 'AES key must be 16 characters.' });
+    return res.status(400).json({ error: "AES key must be 16 characters." });
   const ciphertext = CryptoJS.AES.encrypt(plaintext, key).toString();
   res.json({ ciphertext });
 });
 
-app.post('/decrypt/aes', (req, res) => {
+app.post("/decrypt/aes", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || key.length !== 16)
-    return res.status(400).json({ error: 'AES key must be 16 characters.' });
+    return res.status(400).json({ error: "AES key must be 16 characters." });
   const bytes = CryptoJS.AES.decrypt(ciphertext, key);
   const plaintext = bytes.toString(CryptoJS.enc.Utf8);
   res.json({ plaintext });
 });
 
-app.post('/encrypt-file/aes', upload.single('file'), (req, res) => {
+app.post("/encrypt-file/aes", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
-  if (!file || key.length !== 16) return res.status(400).send('Invalid file or AES key');
+  if (!file || key.length !== 16)
+    return res.status(400).send("Invalid file or AES key");
   try {
     const encrypted = CryptoJS.AES.encrypt(
       CryptoJS.lib.WordArray.create(file.buffer),
@@ -41,46 +42,48 @@ app.post('/encrypt-file/aes', upload.single('file'), (req, res) => {
     ).toString();
     res.send(Buffer.from(encrypted));
   } catch {
-    res.status(500).send('Encryption failed');
+    res.status(500).send("Encryption failed");
   }
 });
 
-app.post('/decrypt-file/aes', upload.single('file'), (req, res) => {
+app.post("/decrypt-file/aes", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
-  if (!file || key.length !== 16) return res.status(400).send('Invalid file or AES key');
+  if (!file || key.length !== 16)
+    return res.status(400).send("Invalid file or AES key");
   try {
     const decrypted = CryptoJS.AES.decrypt(file.buffer.toString(), key);
-    const result = Buffer.from(decrypted.toString(CryptoJS.enc.Utf8), 'utf8');
+    const result = Buffer.from(decrypted.toString(CryptoJS.enc.Utf8), "utf8");
     res.send(result);
   } catch {
-    res.status(500).send('Decryption failed');
+    res.status(500).send("Decryption failed");
   }
 });
 
 /* ---------------- DES ---------------- */
 
-app.post('/encrypt/des', (req, res) => {
+app.post("/encrypt/des", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || key.length !== 24)
-    return res.status(400).json({ error: 'DES key must be 24 characters.' });
+    return res.status(400).json({ error: "DES key must be 24 characters." });
   const ciphertext = CryptoJS.TripleDES.encrypt(plaintext, key).toString();
   res.json({ ciphertext });
 });
 
-app.post('/decrypt/des', (req, res) => {
+app.post("/decrypt/des", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || key.length !== 24)
-    return res.status(400).json({ error: 'DES key must be 24 characters.' });
+    return res.status(400).json({ error: "DES key must be 24 characters." });
   const bytes = CryptoJS.TripleDES.decrypt(ciphertext, key);
   const plaintext = bytes.toString(CryptoJS.enc.Utf8);
   res.json({ plaintext });
 });
 
-app.post('/encrypt-file/des', upload.single('file'), (req, res) => {
+app.post("/encrypt-file/des", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
-  if (!file || key.length !== 24) return res.status(400).send('Invalid file or DES key');
+  if (!file || key.length !== 24)
+    return res.status(400).send("Invalid file or DES key");
   try {
     const encrypted = CryptoJS.TripleDES.encrypt(
       CryptoJS.lib.WordArray.create(file.buffer),
@@ -88,20 +91,21 @@ app.post('/encrypt-file/des', upload.single('file'), (req, res) => {
     ).toString();
     res.send(Buffer.from(encrypted));
   } catch {
-    res.status(500).send('Encryption failed');
+    res.status(500).send("Encryption failed");
   }
 });
 
-app.post('/decrypt-file/des', upload.single('file'), (req, res) => {
+app.post("/decrypt-file/des", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
-  if (!file || key.length !== 24) return res.status(400).send('Invalid file or DES key');
+  if (!file || key.length !== 24)
+    return res.status(400).send("Invalid file or DES key");
   try {
     const decrypted = CryptoJS.TripleDES.decrypt(file.buffer.toString(), key);
-    const result = Buffer.from(decrypted.toString(CryptoJS.enc.Utf8), 'utf8');
+    const result = Buffer.from(decrypted.toString(CryptoJS.enc.Utf8), "utf8");
     res.send(result);
   } catch {
-    res.status(500).send('Decryption failed');
+    res.status(500).send("Decryption failed");
   }
 });
 
@@ -110,59 +114,64 @@ app.post('/decrypt-file/des', upload.single('file'), (req, res) => {
 const caesarShift = (text, shift, decrypt = false) => {
   if (decrypt) shift = (26 - shift) % 26;
   return text.replace(/[a-z]/gi, (char) => {
-    const base = char <= 'Z' ? 65 : 97;
-    return String.fromCharCode(((char.charCodeAt(0) - base + shift) % 26) + base);
+    const base = char <= "Z" ? 65 : 97;
+    return String.fromCharCode(
+      ((char.charCodeAt(0) - base + shift) % 26) + base
+    );
   });
 };
 
-app.post('/encrypt/caesar', (req, res) => {
+app.post("/encrypt/caesar", (req, res) => {
   const { plaintext, key } = req.body;
   const shift = parseInt(key);
-  if (!plaintext || isNaN(shift)) return res.status(400).json({ error: 'Invalid Caesar key' });
+  if (!plaintext || isNaN(shift))
+    return res.status(400).json({ error: "Invalid Caesar key" });
   res.json({ ciphertext: caesarShift(plaintext, shift) });
 });
 
-app.post('/decrypt/caesar', (req, res) => {
+app.post("/decrypt/caesar", (req, res) => {
   const { ciphertext, key } = req.body;
   const shift = parseInt(key);
-  if (!ciphertext || isNaN(shift)) return res.status(400).json({ error: 'Invalid Caesar key' });
+  if (!ciphertext || isNaN(shift))
+    return res.status(400).json({ error: "Invalid Caesar key" });
   res.json({ plaintext: caesarShift(ciphertext, shift, true) });
 });
 
 /* ---------------- Vernam ---------------- */
 
 function xorStrings(a, b) {
-  return a.split('').map((char, i) =>
-    String.fromCharCode(char.charCodeAt(0) ^ b.charCodeAt(i))
-  ).join('');
+  return a
+    .split("")
+    .map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ b.charCodeAt(i)))
+    .join("");
 }
 
-app.post('/encrypt/vernam', (req, res) => {
+app.post("/encrypt/vernam", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || !key || plaintext.length !== key.length)
-    return res.status(400).json({ error: 'Key must match plaintext length' });
+    return res.status(400).json({ error: "Key must match plaintext length" });
   const ciphertext = xorStrings(plaintext, key);
-  res.json({ ciphertext: Buffer.from(ciphertext).toString('base64') });
+  res.json({ ciphertext: Buffer.from(ciphertext).toString("base64") });
 });
 
-app.post('/decrypt/vernam', (req, res) => {
+app.post("/decrypt/vernam", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || !key)
-    return res.status(400).json({ error: 'Missing ciphertext or key' });
+    return res.status(400).json({ error: "Missing ciphertext or key" });
 
-  const decoded = Buffer.from(ciphertext, 'base64').toString();
+  const decoded = Buffer.from(ciphertext, "base64").toString();
   if (decoded.length !== key.length)
-    return res.status(400).json({ error: 'Key must match ciphertext length' });
+    return res.status(400).json({ error: "Key must match ciphertext length" });
 
   const plaintext = xorStrings(decoded, key);
   res.json({ plaintext });
 });
 
-app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
+app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
   if (!file || !key || key.length !== file.buffer.length)
-    return res.status(400).send('Key length must match file size');
+    return res.status(400).send("Key length must match file size");
 
   const encrypted = Buffer.alloc(file.buffer.length);
   for (let i = 0; i < file.buffer.length; i++) {
@@ -171,11 +180,11 @@ app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
   res.send(encrypted);
 });
 
-app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
+app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
   if (!file || !key || key.length !== file.buffer.length)
-    return res.status(400).send('Key length must match file size');
+    return res.status(400).send("Key length must match file size");
 
   const decrypted = Buffer.alloc(file.buffer.length);
   for (let i = 0; i < file.buffer.length; i++) {
@@ -189,45 +198,49 @@ app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
 function vigenere(text, key, decrypt = false) {
   const keyLen = key.length;
   return text
-    .split('')
+    .split("")
     .map((char, i) => {
       if (!char.match(/[a-zA-Z]/)) return char;
-      const base = char <= 'Z' ? 65 : 97;
+      const base = char <= "Z" ? 65 : 97;
       const k = key[i % keyLen].toLowerCase().charCodeAt(0) - 97;
-      const shift = decrypt ? (26 - k) : k;
-      return String.fromCharCode(((char.charCodeAt(0) - base + shift) % 26) + base);
+      const shift = decrypt ? 26 - k : k;
+      return String.fromCharCode(
+        ((char.charCodeAt(0) - base + shift) % 26) + base
+      );
     })
-    .join('');
+    .join("");
 }
 
-app.post('/encrypt/vigenere', (req, res) => {
+app.post("/encrypt/vigenere", (req, res) => {
   const { plaintext, key } = req.body;
-  if (!plaintext || !key) return res.status(400).json({ error: 'Missing data' });
+  if (!plaintext || !key)
+    return res.status(400).json({ error: "Missing data" });
   res.json({ ciphertext: vigenere(plaintext, key, false) });
 });
 
-app.post('/decrypt/vigenere', (req, res) => {
+app.post("/decrypt/vigenere", (req, res) => {
   const { ciphertext, key } = req.body;
-  if (!ciphertext || !key) return res.status(400).json({ error: 'Missing data' });
+  if (!ciphertext || !key)
+    return res.status(400).json({ error: "Missing data" });
   res.json({ plaintext: vigenere(ciphertext, key, true) });
 });
 
-app.post('/encrypt-file/vigenere', upload.single('file'), (req, res) => {
+app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
-  if (!file || !key) return res.status(400).send('Missing file or key');
-  const input = file.buffer.toString('utf8');
+  if (!file || !key) return res.status(400).send("Missing file or key");
+  const input = file.buffer.toString("utf8");
   const output = vigenere(input, key, false);
-  res.send(Buffer.from(output, 'utf8'));
+  res.send(Buffer.from(output, "utf8"));
 });
 
-app.post('/decrypt-file/vigenere', upload.single('file'), (req, res) => {
+app.post("/decrypt-file/vigenere", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
-  if (!file || !key) return res.status(400).send('Missing file or key');
-  const input = file.buffer.toString('utf8');
+  if (!file || !key) return res.status(400).send("Missing file or key");
+  const input = file.buffer.toString("utf8");
   const output = vigenere(input, key, true);
-  res.send(Buffer.from(output, 'utf8'));
+  res.send(Buffer.from(output, "utf8"));
 });
 
 /* ---------------- Server Start ---------------- */

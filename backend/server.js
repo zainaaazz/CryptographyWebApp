@@ -229,18 +229,36 @@ app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
   if (!file || !key) return res.status(400).send("Missing file or key");
-  const input = file.buffer.toString("utf8");
-  const output = vigenere(input, key, false);
-  res.send(Buffer.from(output, "utf8"));
+  
+  // Convert buffer to array of bytes
+  const inputBytes = Array.from(file.buffer);
+  const outputBytes = inputBytes.map((byte, i) => {
+    const k = key[i % key.length].toLowerCase().charCodeAt(0) - 97;
+    return (byte + k) % 256;
+  });
+  
+  const output = Buffer.from(outputBytes);
+  res.setHeader('Content-Type', file.mimetype);
+  res.setHeader('Content-Disposition', `attachment; filename="encrypted_${file.originalname}"`);
+  res.send(output);
 });
 
 app.post("/decrypt-file/vigenere", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
   if (!file || !key) return res.status(400).send("Missing file or key");
-  const input = file.buffer.toString("utf8");
-  const output = vigenere(input, key, true);
-  res.send(Buffer.from(output, "utf8"));
+  
+  // Convert buffer to array of bytes
+  const inputBytes = Array.from(file.buffer);
+  const outputBytes = inputBytes.map((byte, i) => {
+    const k = key[i % key.length].toLowerCase().charCodeAt(0) - 97;
+    return (byte - k + 256) % 256;
+  });
+  
+  const output = Buffer.from(outputBytes);
+  res.setHeader('Content-Type', file.mimetype);
+  res.setHeader('Content-Disposition', `attachment; filename="decrypted_${file.originalname}"`);
+  res.send(output);
 });
 
 /* ---------------- Server Start ---------------- */

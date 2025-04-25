@@ -55,9 +55,16 @@ export default function VigenerePage() {
         responseType: 'blob',
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const blob = new Blob([response.data]);
+      
+      // Get the original filename from the response headers
+      const contentDisposition = response.headers['content-disposition'];
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : `${action}ed_${file.name}`;
+      
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
       const url = URL.createObjectURL(blob);
-      setFileResult(url);
+      setFileResult({ url, filename });
       setError('');
     } catch {
       setError('File encryption/decryption failed.');
@@ -118,7 +125,15 @@ export default function VigenerePage() {
             <button className="btn btn-outline-success" onClick={() => encryptOrDecryptFile('encrypt')}>Encrypt File</button>
             <button className="btn btn-outline-warning" onClick={() => encryptOrDecryptFile('decrypt')}>Decrypt File</button>
           </div>
-          {fileResult && <a href={fileResult} className="btn btn-primary" download>Download Result</a>}
+          {fileResult && (
+            <a 
+              href={fileResult.url} 
+              className="btn btn-primary" 
+              download={fileResult.filename}
+            >
+              Download Result
+            </a>
+          )}
         </div>
       )}
     </div>

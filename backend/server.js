@@ -122,16 +122,16 @@ const caesarShift = (text, shift, decrypt = false) => {
 };
 
 app.post("/encrypt/caesar", (req, res) => {
-  const { plaintext, key } = req.body;
-  const shift = parseInt(key);
+  const { plaintext, shift } = req.body;
+  const shiftValue = parseInt(shift);
   if (!plaintext || isNaN(shift))
     return res.status(400).json({ error: "Invalid Caesar key" });
   res.json({ ciphertext: caesarShift(plaintext, shift) });
 });
 
 app.post("/decrypt/caesar", (req, res) => {
-  const { ciphertext, key } = req.body;
-  const shift = parseInt(key);
+  const { ciphertext, shift } = req.body;
+  const shiftValue = parseInt(shift);
   if (!ciphertext || isNaN(shift))
     return res.status(400).json({ error: "Invalid Caesar key" });
   res.json({ plaintext: caesarShift(ciphertext, shift, true) });

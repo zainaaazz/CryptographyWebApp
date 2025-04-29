@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const CryptoJS = require("crypto-js");
+const swaggerDocs = require('./swagger');
+
 
 const app = express();
 const port = 5000;
@@ -10,6 +12,36 @@ app.use(cors());
 app.use(express.json());
 
 const upload = multer();
+
+/**
+ * @swagger
+ * tags:
+ *   name: AES
+ *   description: AES encryption and decryption
+ */
+/**
+ * @swagger
+ * /encrypt/aes:
+ *   post:
+ *     summary: Encrypt plaintext using AES
+ *     tags: [AES]
+ *     description: Encrypts a plaintext string using AES encryption with a 16-character key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plaintext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns AES-encrypted ciphertext
+ */
+
 
 /* ---------------- AES ---------------- */
 
@@ -21,6 +53,30 @@ app.post("/encrypt/aes", (req, res) => {
   res.json({ ciphertext });
 });
 
+/**
+ * @swagger
+ * /decrypt/aes:
+ *   post:
+ *     summary: Decrypt AES ciphertext
+ *     tags: [AES]
+ *     description: Decrypts AES ciphertext using the provided 16-character key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ciphertext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted plaintext
+ */
+
+
 app.post("/decrypt/aes", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || key.length !== 16)
@@ -29,6 +85,31 @@ app.post("/decrypt/aes", (req, res) => {
   const plaintext = bytes.toString(CryptoJS.enc.Utf8);
   res.json({ plaintext });
 });
+
+/**
+ * @swagger
+ * /encrypt-file/aes:
+ *   post:
+ *     summary: Encrypt file using AES
+ *     tags: [AES]
+ *     description: Encrypts an uploaded file using AES encryption.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns encrypted file
+ */
+
 
 app.post("/encrypt-file/aes", upload.single("file"), (req, res) => {
   const file = req.file;
@@ -46,6 +127,31 @@ app.post("/encrypt-file/aes", upload.single("file"), (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /decrypt-file/aes:
+ *   post:
+ *     summary: Decrypt file encrypted with AES
+ *     tags: [AES]
+ *     description: Decrypts an AES-encrypted uploaded file.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted file
+ */
+
+
 app.post("/decrypt-file/aes", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
@@ -62,6 +168,37 @@ app.post("/decrypt-file/aes", upload.single("file"), (req, res) => {
 
 /* ---------------- DES ---------------- */
 
+/**
+ * @swagger
+ * tags:
+ *   name: DES
+ *   description: DES encryption and decryption
+ */
+
+/**
+ * @swagger
+ * /encrypt/des:
+ *   post:
+ *     summary: Encrypt plaintext using DES (TripleDES)
+ *     tags: [DES]
+ *     description: Encrypts plaintext with a 24-character key using TripleDES encryption.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plaintext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns DES-encrypted ciphertext
+ */
+
+
 app.post("/encrypt/des", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || key.length !== 24)
@@ -69,6 +206,31 @@ app.post("/encrypt/des", (req, res) => {
   const ciphertext = CryptoJS.TripleDES.encrypt(plaintext, key).toString();
   res.json({ ciphertext });
 });
+
+
+/**
+ * @swagger
+ * /decrypt/des:
+ *   post:
+ *     summary: Decrypt DES ciphertext
+ *     tags: [DES]
+ *     description: Decrypts TripleDES ciphertext using the provided 24-character key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ciphertext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted plaintext
+ */
+
 
 app.post("/decrypt/des", (req, res) => {
   const { ciphertext, key } = req.body;
@@ -78,6 +240,32 @@ app.post("/decrypt/des", (req, res) => {
   const plaintext = bytes.toString(CryptoJS.enc.Utf8);
   res.json({ plaintext });
 });
+
+
+/**
+ * @swagger
+ * /encrypt-file/des:
+ *   post:
+ *     summary: Encrypt file using DES
+ *     tags: [DES]
+ *     description: Encrypts an uploaded file using TripleDES encryption.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns encrypted file
+ */
+
 
 app.post("/encrypt-file/des", upload.single("file"), (req, res) => {
   const file = req.file;
@@ -95,6 +283,32 @@ app.post("/encrypt-file/des", upload.single("file"), (req, res) => {
   }
 });
 
+
+/**
+ * @swagger
+ * /decrypt-file/des:
+ *   post:
+ *     summary: Decrypt file encrypted with DES
+ *     tags: [DES]
+ *     description: Decrypts a TripleDES-encrypted file.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted file
+ */
+
+
 app.post("/decrypt-file/des", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
@@ -111,6 +325,8 @@ app.post("/decrypt-file/des", upload.single("file"), (req, res) => {
 
 /* ---------------- Caesar ---------------- */
 
+
+
 const caesarShift = (text, shift, decrypt = false) => {
   if (decrypt) shift = (26 - shift) % 26;
   return text.replace(/[a-z]/gi, (char) => {
@@ -121,6 +337,37 @@ const caesarShift = (text, shift, decrypt = false) => {
   });
 };
 
+/**
+ * @swagger
+ * tags:
+ *   name: Ceasar
+ *   description: Ceasar encryption and decryption
+ */
+
+/**
+ * @swagger
+ * /encrypt/caesar:
+ *   post:
+ *     summary: Encrypt plaintext using Caesar cipher
+ *     tags: [Ceasar]
+ *     description: Encrypts plaintext by shifting letters based on a numeric key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plaintext:
+ *                 type: string
+ *               key:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Returns Caesar-encrypted ciphertext
+ */
+
+
 app.post("/encrypt/caesar", (req, res) => {
   const { plaintext, shift } = req.body;
   const shiftValue = parseInt(shift);
@@ -128,6 +375,31 @@ app.post("/encrypt/caesar", (req, res) => {
     return res.status(400).json({ error: "Invalid Caesar key" });
   res.json({ ciphertext: caesarShift(plaintext, shift) });
 });
+
+
+/**
+ * @swagger
+ * /decrypt/caesar:
+ *   post:
+ *     summary: Decrypt Caesar ciphertext
+ *     tags: [Ceasar]
+ *     description: Decrypts Caesar cipher using a numeric shift value.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ciphertext:
+ *                 type: string
+ *               key:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Returns decrypted plaintext
+ */
+
 
 app.post("/decrypt/caesar", (req, res) => {
   const { ciphertext, shift } = req.body;
@@ -146,6 +418,37 @@ function xorStrings(a, b) {
     .join("");
 }
 
+/**
+ * @swagger
+ * tags:
+ *   name: Vernam
+ *   description: Vernam encryption and decryption
+ */
+
+/**
+ * @swagger
+ * /encrypt/vernam:
+ *   post:
+ *     summary: Encrypt plaintext using Vernam cipher
+ *     tags: [Vernam]
+ *     description: Encrypts plaintext using bitwise XOR with a key of the same length.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plaintext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns base64-encoded ciphertext
+ */
+
+
 app.post("/encrypt/vernam", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || !key || plaintext.length !== key.length)
@@ -153,6 +456,31 @@ app.post("/encrypt/vernam", (req, res) => {
   const ciphertext = xorStrings(plaintext, key);
   res.json({ ciphertext: Buffer.from(ciphertext).toString("base64") });
 });
+
+
+/**
+ * @swagger
+ * /decrypt/vernam:
+ *   post:
+ *     summary: Decrypt Vernam ciphertext
+ *     tags: [Vernam]
+ *     description: Decrypts a Vernam-encrypted base64 ciphertext using XOR with the key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ciphertext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted plaintext
+ */
+
 
 app.post("/decrypt/vernam", (req, res) => {
   const { ciphertext, key } = req.body;
@@ -167,6 +495,32 @@ app.post("/decrypt/vernam", (req, res) => {
   res.json({ plaintext });
 });
 
+
+/**
+ * @swagger
+ * /encrypt-file/vernam:
+ *   post:
+ *     summary: Encrypt file using Vernam cipher
+ *     tags: [Vernam]
+ *     description: Encrypts a file using Vernam XOR cipher. The key must match the file size.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns encrypted file
+ */
+
+
 app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
@@ -179,6 +533,33 @@ app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
   }
   res.send(encrypted);
 });
+
+
+/**
+ * @swagger
+ * /decrypt-file/vernam:
+ *   post:
+ *     summary: Decrypt file encrypted with Vernam cipher
+ *     tags: [Vernam]
+ *     description: Decrypts a Vernam-encrypted file using the XOR method.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted file
+ */
+
+
 
 app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
   const { key } = req.body;
@@ -211,6 +592,39 @@ function vigenere(text, key, decrypt = false) {
     .join("");
 }
 
+/**
+ * @swagger
+ * tags:
+ *   name: Vigenere
+ *   description: Vigenere encryption and decryption
+ */
+
+
+/**
+ * @swagger
+ * /encrypt/vigenere:
+ *   post:
+ *     summary: Encrypt plaintext using Vigenère cipher
+ *     tags: [Vigenere]
+ *     description: Encrypts plaintext using Vigenère cipher with alphabetic shifting based on a key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plaintext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns Vigenère-encrypted ciphertext
+ */
+
+
+
 app.post("/encrypt/vigenere", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || !key)
@@ -218,12 +632,63 @@ app.post("/encrypt/vigenere", (req, res) => {
   res.json({ ciphertext: vigenere(plaintext, key, false) });
 });
 
+
+/**
+ * @swagger
+ * /decrypt/vigenere:
+ *   post:
+ *     summary: Decrypt Vigenère ciphertext
+ *     tags: [Vigenere]
+ *     description: Decrypts a Vigenère-encrypted ciphertext using the key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ciphertext:
+ *                 type: string
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted plaintext
+ */
+
+
 app.post("/decrypt/vigenere", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || !key)
     return res.status(400).json({ error: "Missing data" });
   res.json({ plaintext: vigenere(ciphertext, key, true) });
 });
+
+
+/**
+ * @swagger
+ * /encrypt-file/vigenere:
+ *   post:
+ *     summary: Encrypt file using Vigenère cipher
+ *     tags: [Vigenere]
+ *     description: Encrypts uploaded text file using Vigenère cipher based on a key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns encrypted file
+ */
+
 
 app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
   const file = req.file;
@@ -243,6 +708,33 @@ app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
   res.send(output);
 });
 
+
+
+/**
+ * @swagger
+ * /decrypt-file/vigenere:
+ *   post:
+ *     summary: Decrypt file encrypted with Vigenère cipher
+ *     tags: [Vigenere]
+ *     description: Decrypts Vigenère-encrypted uploaded text files.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted file
+ */
+
+
 app.post("/decrypt-file/vigenere", upload.single("file"), (req, res) => {
   const file = req.file;
   const key = req.body.key;
@@ -261,8 +753,10 @@ app.post("/decrypt-file/vigenere", upload.single("file"), (req, res) => {
   res.send(output);
 });
 
-/* ---------------- Server Start ---------------- */
+// Swagger docs
+swaggerDocs(app);
 
+// Start server
 app.listen(port, () => {
   console.log(`🔐 Server is running at http://localhost:${port}`);
 });

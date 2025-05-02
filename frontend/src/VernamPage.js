@@ -10,13 +10,44 @@ export default function VernamPage() {
   const [file, setFile] = useState(null);
   const [fileResult, setFileResult] = useState('');
   const [error, setError] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [generating, setGenerating] = useState(false);
 
-  const generateKey = (length) => {
-    const result = Array.from({ length }, () =>
-      String.fromCharCode(Math.floor(Math.random() * 256))
-    ).join('');
-    setKey(result);
-    navigator.clipboard.writeText(result);
+  const generateKey = async (length) => {
+    if (length > 65536) {
+      try {
+        setGenerating(true);
+        setProgress(0);
+
+        const interval = setInterval(() => {
+          setProgress((prev) => (prev >= 95 ? prev : prev + 1));
+        }, 30);
+
+        const response = await axios.post(
+          'http://localhost:5000/generate-vernam-key',
+          { fileSize: length },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+
+        clearInterval(interval);
+        setProgress(100);
+        setKey(response.data);
+        navigator.clipboard.writeText(response.data);
+      } catch (error) {
+        console.error(error);
+        setError('Failed to generate large random key.');
+      } finally {
+        setTimeout(() => setGenerating(false), 300);
+      }
+    } else {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      setKey(result);
+      navigator.clipboard.writeText(result);
+    }
   };
 
   const encryptText = async () => {
@@ -48,18 +79,35 @@ export default function VernamPage() {
 
   const encryptOrDecryptFile = async (action) => {
     if (!file || !key || key.length !== file.size)
-      return setError('Key must match file size (in bytes).');
+      return setError(`Key must match file size (file: ${file.size} bytes, key: ${key.length} bytes)`);
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('key', key);
+
     try {
       const response = await axios.post(`http://localhost:5000/${action}-file/vernam`, formData, {
         responseType: 'blob',
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      const blob = new Blob([response.data]);
-      const url = URL.createObjectURL(blob);
-      setFileResult(url);
+
+      const contentDisposition = response.headers['content-disposition'] || response.headers['Content-Disposition'];
+      let filename = action === 'encrypt' ? 'encrypted.vernam' : 'decrypted_output';
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      window.URL.revokeObjectURL(url);
+
       setError('');
     } catch {
       setError('File encryption/decryption failed.');
@@ -116,6 +164,20 @@ export default function VernamPage() {
             <input className="form-control" placeholder="Key (same byte length as file)" value={key} onChange={(e) => setKey(e.target.value)} />
             <button className="btn btn-outline-secondary" onClick={() => generateKey(file?.size || 8)}>🔑 Generate</button>
           </div>
+
+          {generating && (
+            <div className="progress mb-3 w-100">
+              <div
+                className="progress-bar progress-bar-striped progress-bar-animated bg-success"
+
+                role="progressbar"
+                style={{ width: `${progress}%` }}
+              >
+                {progress}%
+              </div>
+            </div>
+          )}
+
           <div className="d-flex gap-3 mb-3">
             <button className="btn btn-outline-success" onClick={() => encryptOrDecryptFile('encrypt')}>Encrypt File</button>
             <button className="btn btn-outline-warning" onClick={() => encryptOrDecryptFile('decrypt')}>Decrypt File</button>

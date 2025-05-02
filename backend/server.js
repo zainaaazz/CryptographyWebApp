@@ -8,9 +8,13 @@ const swaggerDocs = require("./swagger");
 const app = express();
 const port = 5000;
 
-app.use(cors());
+app.use(cors({
+  exposedHeaders: ['Content-Disposition']
+}));
+
 app.use(express.json());
 const upload = multer();
+
 
 /* ---------------- AES ---------------- */
 
@@ -330,13 +334,15 @@ app.post("/decrypt-file/des", upload.single("file"), (req, res) => {
  *   description: Vernam (XOR) encryption and decryption
  */
 
-function xorBuffer(buffer, key) {
+
+function xorBuffer(buffer, keyBuffer) {
   const result = Buffer.alloc(buffer.length);
   for (let i = 0; i < buffer.length; i++) {
-    result[i] = buffer[i] ^ key.charCodeAt(i);
+    result[i] = buffer[i] ^ keyBuffer[i];
   }
   return result;
 }
+
 
 
 /**
@@ -436,16 +442,29 @@ app.post("/decrypt/vernam", (req, res) => {
  */
 
 
-app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
-  const { key } = req.body;
-  const file = req.file;
-  if (!file || !key || key.length !== file.buffer.length)
-    return res.status(400).send("Key length must match file size.");
 
-  const encrypted = xorBuffer(file.buffer, key);
-  res.setHeader("Content-Disposition", `attachment; filename=encrypted_${file.originalname}`);
-  res.send(encrypted);
+app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
+  const fileBuffer = req.file.buffer;
+  const key = Buffer.from(req.body.key, 'latin1');
+
+  if (key.length !== fileBuffer.length) {
+    return res.status(400).send('Key must be the same length as the file.');
+  }
+
+  const encryptedBuffer = Buffer.alloc(fileBuffer.length);
+  for (let i = 0; i < fileBuffer.length; i++) {
+    encryptedBuffer[i] = fileBuffer[i] ^ key[i];
+  }
+
+  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
+  const extension = req.file.originalname.split('.').pop();
+  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamEncrypted.${extension}"`);
+  
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.send(encryptedBuffer);
 });
+
+
 
 
 /**
@@ -473,16 +492,53 @@ app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
  */
 
 
-app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
-  const { key } = req.body;
-  const file = req.file;
-  if (!file || !key || key.length !== file.buffer.length)
-    return res.status(400).send("Key length must match file size.");
+app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
+  const encryptedBuffer = req.file.buffer;
+  const key = Buffer.from(req.body.key, 'latin1');
 
-  const decrypted = xorBuffer(file.buffer, key);
-  res.setHeader("Content-Disposition", `attachment; filename=decrypted_${file.originalname}`);
-  res.send(decrypted);
+  if (key.length !== encryptedBuffer.length) {
+    return res.status(400).send('Key must be the same length as the file.');
+  }
+
+  const decryptedBuffer = Buffer.alloc(encryptedBuffer.length);
+  for (let i = 0; i < encryptedBuffer.length; i++) {
+    decryptedBuffer[i] = encryptedBuffer[i] ^ key[i];
+  }
+
+  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
+  const extension = req.file.originalname.split('.').pop();
+  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamDecrypted.${extension}"`);
+
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.send(decryptedBuffer);
 });
+
+
+
+app.post('/generate-vernam-key', (req, res) => {
+  console.log('Body received:', req.body);
+  
+  const { fileSize } = req.body;
+  
+  if (!fileSize || isNaN(fileSize)) {
+    return res.status(400).send('Invalid file size');
+  }
+  
+  const size = parseInt(fileSize);
+  
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
+  let key = '';
+  
+  for (let i = 0; i < size; i++) {
+    key += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+
+  res.send(key);
+});
+
+
+
+
 
 /* ---------------- Vigenere ---------------- */
 

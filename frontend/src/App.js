@@ -6,6 +6,7 @@ import CaesarPage from "./CaesarPage";
 import CustomPage from "./CustomPage";
 import VernamPage from "./VernamPage";
 import VigenerePage from "./VigenerePage";
+import CustomPage2 from "./CustomPage2";
 
 import { Lock, ShieldCheck, KeyRound } from "lucide-react"; // icons
 import Header from './Header'; 
@@ -15,12 +16,15 @@ function NavButtons() {
   const { pathname } = useLocation();
 
   const buttons = [
+ 
+    { to: "/vernam", label: "Vernam", icon: <KeyRound size={20} /> },
+    { to: "/vigenere", label: "Vigenere", icon: <KeyRound size={20} /> },
+    //transposition
     { to: "/aes", label: "AES", icon: <Lock size={20} /> },
     { to: "/des", label: "DES", icon: <ShieldCheck size={20} /> },
     { to: "/caesar", label: "Caesar", icon: <KeyRound size={20} /> },
-    { to: "/custom", label: "Custom", icon: <KeyRound size={20} /> },
-    { to: "/vernam", label: "Vernam", icon: <KeyRound size={20} /> },
-    { to: "/vigenere", label: "Vigenere", icon: <KeyRound size={20} /> }
+    { to: "/custom", label: "Custom - GMC", icon: <KeyRound size={20} /> },
+    { to: "/custom2", label: "Custom - EmojiCode", icon: <KeyRound size={20} /> }
   ];
 
   return (
@@ -53,6 +57,7 @@ export default function App() {
           <Route path="/custom" element={<CustomPage />} />
           <Route path="/vernam" element={<VernamPage />} />
           <Route path="/vigenere" element={<VigenerePage />} />
+          <Route path="/custom2" element={<CustomPage2 />} />
 
         </Routes>
       </div>

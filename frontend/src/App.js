@@ -16,11 +16,13 @@ function NavButtons() {
   const { pathname } = useLocation();
 
   const buttons = [
+ 
+    { to: "/vernam", label: "Vernam", icon: <KeyRound size={20} /> },
+    { to: "/vigenere", label: "Vigenere", icon: <KeyRound size={20} /> },
+    //transposition
     { to: "/aes", label: "AES", icon: <Lock size={20} /> },
     { to: "/des", label: "DES", icon: <ShieldCheck size={20} /> },
     { to: "/caesar", label: "Caesar", icon: <KeyRound size={20} /> },
-    { to: "/vernam", label: "Vernam", icon: <KeyRound size={20} /> },
-    { to: "/vigenere", label: "Vigenere", icon: <KeyRound size={20} /> },
     { to: "/custom", label: "Custom - GMC", icon: <KeyRound size={20} /> },
     { to: "/custom2", label: "Custom - EmojiCode", icon: <KeyRound size={20} /> }
   ];

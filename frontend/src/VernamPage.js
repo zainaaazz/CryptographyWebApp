@@ -5,16 +5,21 @@ export default function VernamPage() {
   const [activeTab, setActiveTab] = useState('text');
   const [plaintext, setPlaintext] = useState('');
   const [key, setKey] = useState('');
+  const [realKey, setRealKey] = useState('');
   const [ciphertext, setCiphertext] = useState('');
   const [decryptedText, setDecryptedText] = useState('');
   const [file, setFile] = useState(null);
   const [fileResult, setFileResult] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [progress, setProgress] = useState(0);
   const [generating, setGenerating] = useState(false);
 
   const generateKey = async (length) => {
-    if (length > 65536) {
+    setError('');
+    setMessage('');
+
+    if (length > 1048576) { // > 1MB
       try {
         setGenerating(true);
         setProgress(0);
@@ -31,8 +36,12 @@ export default function VernamPage() {
 
         clearInterval(interval);
         setProgress(100);
-        setKey(response.data);
-        navigator.clipboard.writeText(response.data);
+        await navigator.clipboard.writeText(response.data);
+        setMessage('✔ Key copied to clipboard');
+
+        setRealKey(response.data);
+        setKey('Key generated successfully. Too large to display.');
+
       } catch (error) {
         console.error(error);
         setError('Failed to generate large random key.');
@@ -46,30 +55,36 @@ export default function VernamPage() {
         result += characters.charAt(Math.floor(Math.random() * characters.length));
       }
       setKey(result);
-      navigator.clipboard.writeText(result);
+      setRealKey(result);
+      await navigator.clipboard.writeText(result);
+      setMessage('✔ Key copied to clipboard');
     }
   };
 
   const encryptText = async () => {
-    if (!key || plaintext.length !== key.length)
+    setError('');
+    setMessage('');
+    const usedKey = key.includes('Too large') ? realKey : key;
+    if (!usedKey || plaintext.length !== usedKey.length)
       return setError('Key must match plaintext length.');
     try {
-      const response = await axios.post('http://localhost:5000/encrypt/vernam', { plaintext, key });
+      const response = await axios.post('http://localhost:5000/encrypt/vernam', { plaintext, key: usedKey });
       setCiphertext(response.data.ciphertext);
-      setError('');
     } catch {
       setError('Text encryption failed.');
     }
   };
 
   const decryptText = async () => {
+    setError('');
+    setMessage('');
     const decoded = atob(ciphertext);
-    if (!key || decoded.length !== key.length)
+    const usedKey = key.includes('Too large') ? realKey : key;
+    if (!usedKey || decoded.length !== usedKey.length)
       return setError('Key must match ciphertext length.');
     try {
-      const response = await axios.post('http://localhost:5000/decrypt/vernam', { ciphertext, key });
+      const response = await axios.post('http://localhost:5000/decrypt/vernam', { ciphertext, key: usedKey });
       setDecryptedText(response.data.plaintext);
-      setError('');
     } catch {
       setError('Text decryption failed.');
     }
@@ -78,12 +93,15 @@ export default function VernamPage() {
   const handleFileUpload = (e) => setFile(e.target.files[0]);
 
   const encryptOrDecryptFile = async (action) => {
-    if (!file || !key || key.length !== file.size)
-      return setError(`Key must match file size (file: ${file.size} bytes, key: ${key.length} bytes)`);
+    setError('');
+    setMessage('');
+    const usedKey = key.includes('Too large') ? realKey : key;
+    if (!file || !usedKey || usedKey.length !== file.size)
+      return setError(`Key must match file size (file: ${file.size} bytes, key: ${usedKey.length} bytes)`);
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('key', key);
+    formData.append('key', usedKey);
 
     try {
       const response = await axios.post(`http://localhost:5000/${action}-file/vernam`, formData, {
@@ -107,8 +125,6 @@ export default function VernamPage() {
       anchor.click();
       document.body.removeChild(anchor);
       window.URL.revokeObjectURL(url);
-
-      setError('');
     } catch {
       setError('File encryption/decryption failed.');
     }
@@ -133,6 +149,7 @@ export default function VernamPage() {
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
+      {message && <div className="alert alert-success">{message}</div>}
 
       {activeTab === 'text' && (
         <div className="row mb-4">
@@ -140,7 +157,10 @@ export default function VernamPage() {
             <h4 className="text-success">Encrypt</h4>
             <input className="form-control mb-2" placeholder="Plaintext" value={plaintext} onChange={e => setPlaintext(e.target.value)} />
             <div className="input-group mb-3">
-              <input className="form-control" placeholder="Key (same length)" value={key} onChange={e => setKey(e.target.value)} />
+              <input className="form-control" placeholder="Key (same length)" value={key} onChange={e => {
+                setKey(e.target.value);
+                setRealKey(e.target.value);
+              }} />
               <button className="btn btn-outline-secondary" onClick={() => generateKey(plaintext.length || 8)}>🔑 Generate</button>
             </div>
             <button className="btn btn-success" onClick={encryptText}>Encrypt</button>
@@ -150,7 +170,10 @@ export default function VernamPage() {
           <div className="col-md-6">
             <h4 className="text-warning">Decrypt</h4>
             <input className="form-control mb-2" placeholder="Base64 Ciphertext" value={ciphertext} onChange={e => setCiphertext(e.target.value)} />
-            <input className="form-control mb-3" placeholder="Key (same length)" value={key} onChange={e => setKey(e.target.value)} />
+            <input className="form-control mb-3" placeholder="Key (same length)" value={key} onChange={e => {
+              setKey(e.target.value);
+              setRealKey(e.target.value);
+            }} />
             <button className="btn btn-warning" onClick={decryptText}>Decrypt</button>
             <p className="mt-3"><strong>Decrypted:</strong> <code>{decryptedText}</code></p>
           </div>
@@ -161,7 +184,10 @@ export default function VernamPage() {
         <div className="text-white">
           <input type="file" className="form-control mb-3" onChange={handleFileUpload} />
           <div className="input-group mb-3">
-            <input className="form-control" placeholder="Key (same byte length as file)" value={key} onChange={(e) => setKey(e.target.value)} />
+            <input className="form-control" placeholder="Key (same byte length as file)" value={key} readOnly={key.includes('Too large')} onChange={(e) => {
+              setKey(e.target.value);
+              setRealKey(e.target.value);
+            }} />
             <button className="btn btn-outline-secondary" onClick={() => generateKey(file?.size || 8)}>🔑 Generate</button>
           </div>
 
@@ -169,7 +195,6 @@ export default function VernamPage() {
             <div className="progress mb-3 w-100">
               <div
                 className="progress-bar progress-bar-striped progress-bar-animated bg-success"
-
                 role="progressbar"
                 style={{ width: `${progress}%` }}
               >

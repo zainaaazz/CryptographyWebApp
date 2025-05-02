@@ -20,16 +20,25 @@ export default function VernamPage() {
     setMessage('');
   
     const downloadKeyAsTxt = (keyStr) => {
+      let baseName = 'vernam_key';
+      if (file && file.name) {
+        const nameParts = file.name.split('.');
+        nameParts.pop(); // remove extension
+        baseName = nameParts.join('.');
+      }
+      const fileName = `${baseName}-VernamKey.txt`;
+    
       const blob = new Blob([keyStr], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'vernam_key.txt';
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     };
+    
   
     if (length > 1048576) { // > 1MB
       try {
@@ -115,43 +124,59 @@ export default function VernamPage() {
 
   const handleFileUpload = (e) => setFile(e.target.files[0]);
 
-  const encryptOrDecryptFile = async (action) => {
-    setError('');
-    setMessage('');
-    const usedKey = key.includes('Too large') ? realKey : key;
-    if (!file || !usedKey || usedKey.length !== file.size)
-      return setError(`Key must match file size (file: ${file.size} bytes, key: ${usedKey.length} bytes)`);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+const [isDownloading, setIsDownloading] = useState(false);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('key', usedKey);
+const encryptOrDecryptFile = async (action) => {
+  setError('');
+  setMessage('');
+  const usedKey = key.includes('Too large') ? realKey : key;
+  if (!file || !usedKey || usedKey.length !== file.size)
+    return setError(`Key must match file size (file: ${file.size} bytes, key: ${usedKey.length} bytes)`);
 
-    try {
-      const response = await axios.post(`http://localhost:5000/${action}-file/vernam`, formData, {
-        responseType: 'blob',
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('key', usedKey);
 
-      const contentDisposition = response.headers['content-disposition'] || response.headers['Content-Disposition'];
-      let filename = action === 'encrypt' ? 'encrypted.vernam' : 'decrypted_output';
-      if (contentDisposition && contentDisposition.includes('filename=')) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) filename = match[1];
-      }
+  try {
+    setIsDownloading(true);
+    setDownloadProgress(0);
 
-      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
-      const url = window.URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = filename;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      window.URL.revokeObjectURL(url);
-    } catch {
-      setError('File encryption/decryption failed.');
+    const response = await axios.post(`http://localhost:5000/${action}-file/vernam`, formData, {
+      responseType: 'blob',
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onDownloadProgress: (progressEvent) => {
+        const percent = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+        setDownloadProgress(percent);
+      },
+    });
+
+    const contentDisposition = response.headers['content-disposition'] || response.headers['Content-Disposition'];
+    let filename = action === 'encrypt' ? 'encrypted.vernam' : 'decrypted_output';
+    if (contentDisposition && contentDisposition.includes('filename=')) {
+      const match = contentDisposition.match(/filename="?([^"]+)"?/);
+      if (match && match[1]) filename = match[1];
     }
-  };
+
+    const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    window.URL.revokeObjectURL(url);
+
+    setIsDownloading(false);
+    setDownloadProgress(0);
+  } catch {
+    setIsDownloading(false);
+    setDownloadProgress(0);
+    setError('File encryption/decryption failed.');
+  }
+};
+
 
   return (
     <div className="container mt-4">
@@ -173,6 +198,20 @@ export default function VernamPage() {
 
       {error && <div className="alert alert-danger">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
+
+      
+      {isDownloading && (
+      <div className="progress mb-3 w-100">
+        <div
+          className="progress-bar progress-bar-striped progress-bar-animated bg-success"
+          role="progressbar"
+          style={{ width: `${downloadProgress}%` }}
+        >
+          {downloadProgress}%
+        </div>
+      </div>
+    )}
+
 
       {activeTab === 'text' && (
         <div className="row mb-4">

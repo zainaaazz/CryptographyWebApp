@@ -13,7 +13,12 @@ app.use(cors({
 }));
 
 app.use(express.json());
-const upload = multer();
+const upload = multer({
+  limits: {
+    fieldSize: 10 * 1024 * 1024 // allow up to 10MB for text fields like the key
+  }
+});
+
 
 
 /* ---------------- AES ---------------- */
@@ -368,14 +373,41 @@ function xorBuffer(buffer, keyBuffer) {
  *         description: Returns base64-encoded ciphertext
  */
 
-app.post("/encrypt/vernam", (req, res) => {
-  const { plaintext, key } = req.body;
-  if (!plaintext || !key || plaintext.length !== key.length)
-    return res.status(400).json({ error: "Key must match plaintext length." });
 
-  const ciphertext = Buffer.from(xorBuffer(Buffer.from(plaintext), key)).toString("base64");
-  res.json({ ciphertext });
+
+app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
+  const fileBuffer = req.file?.buffer;
+  const rawKey = req.body?.key;
+
+  if (!fileBuffer || !rawKey) {
+    console.error("❌ Missing file or key in request.");
+    return res.status(400).send('Missing file or key.');
+  }
+
+  const key = Buffer.from(rawKey, 'latin1');
+
+  console.log("🔐 ENCRYPT FILE (VERNAM)");
+  console.log("📄 File size:", fileBuffer.length);
+  console.log("🔑 Key length:", key.length);
+  console.log("📂 File name:", req.file.originalname);
+
+  if (key.length !== fileBuffer.length) {
+    console.error("❌ Key and file size mismatch.");
+    return res.status(400).send(`Key must be the same length as the file. Received key length: ${key.length}, expected: ${fileBuffer.length}`);
+  }
+
+  const encryptedBuffer = Buffer.alloc(fileBuffer.length);
+  for (let i = 0; i < fileBuffer.length; i++) {
+    encryptedBuffer[i] = fileBuffer[i] ^ key[i];
+  }
+
+  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
+  const extension = req.file.originalname.split('.').pop();
+  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamEncrypted.${extension}"`);
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.send(encryptedBuffer);
 });
+
 
 
 
@@ -403,19 +435,38 @@ app.post("/encrypt/vernam", (req, res) => {
  */
 
 
-app.post("/decrypt/vernam", (req, res) => {
-  const { ciphertext, key } = req.body;
-  if (!ciphertext || !key)
-    return res.status(400).json({ error: "Missing ciphertext or key." });
+app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
+  const encryptedBuffer = req.file?.buffer;
+  const rawKey = req.body?.key;
 
-  const decoded = Buffer.from(ciphertext, "base64");
-  if (decoded.length !== key.length)
-    return res.status(400).json({ error: "Key must match ciphertext length." });
+  if (!encryptedBuffer || !rawKey) {
+    console.error("❌ Missing file or key in request.");
+    return res.status(400).send('Missing file or key.');
+  }
 
-  const plaintext = xorBuffer(decoded, key).toString();
-  res.json({ plaintext });
+  const key = Buffer.from(rawKey, 'latin1');
+
+  console.log("🔐 DECRYPT FILE (VERNAM)");
+  console.log("📄 File size:", encryptedBuffer.length);
+  console.log("🔑 Key length:", key.length);
+  console.log("📂 File name:", req.file.originalname);
+
+  if (key.length !== encryptedBuffer.length) {
+    console.error("❌ Key and file size mismatch.");
+    return res.status(400).send(`Key must be the same length as the file. Received key length: ${key.length}, expected: ${encryptedBuffer.length}`);
+  }
+
+  const decryptedBuffer = Buffer.alloc(encryptedBuffer.length);
+  for (let i = 0; i < encryptedBuffer.length; i++) {
+    decryptedBuffer[i] = encryptedBuffer[i] ^ key[i];
+  }
+
+  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
+  const extension = req.file.originalname.split('.').pop();
+  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamDecrypted.${extension}"`);
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.send(decryptedBuffer);
 });
-
 
 /**
  * @swagger

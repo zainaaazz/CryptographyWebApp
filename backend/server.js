@@ -15,7 +15,7 @@ app.use(cors({
 app.use(express.json());
 const upload = multer({
   limits: {
-    fieldSize: 10 * 1024 * 1024 // allow up to 10MB for text fields like the key
+    fieldSize: 100 * 1024 * 1024 // allow up to 100MB for text fields like the key
   }
 });
 

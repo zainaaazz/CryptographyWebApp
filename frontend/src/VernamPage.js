@@ -18,36 +18,53 @@ export default function VernamPage() {
   const generateKey = async (length) => {
     setError('');
     setMessage('');
-
+  
+    const downloadKeyAsTxt = (keyStr) => {
+      const blob = new Blob([keyStr], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'vernam_key.txt';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+  
     if (length > 1048576) { // > 1MB
       try {
         setGenerating(true);
         setProgress(0);
-
+  
         const interval = setInterval(() => {
           setProgress((prev) => (prev >= 95 ? prev : prev + 1));
         }, 30);
-
+  
         const response = await axios.post(
           'http://localhost:5000/generate-vernam-key',
           { fileSize: length },
           { headers: { 'Content-Type': 'application/json' } }
         );
-
+  
         clearInterval(interval);
         setProgress(100);
+  
         await navigator.clipboard.writeText(response.data);
         setMessage('✔ Key copied to clipboard');
-
+  
         setRealKey(response.data);
         setKey('Key generated successfully. Too large to display.');
-
+  
+        // Always download large key
+        downloadKeyAsTxt(response.data);
+  
       } catch (error) {
         console.error(error);
         setError('Failed to generate large random key.');
       } finally {
         setTimeout(() => setGenerating(false), 300);
       }
+  
     } else {
       const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
       let result = '';
@@ -58,8 +75,14 @@ export default function VernamPage() {
       setRealKey(result);
       await navigator.clipboard.writeText(result);
       setMessage('✔ Key copied to clipboard');
+  
+      // Ask user if they want to download the key
+      if (window.confirm("Would you like to download the generated key as a text file?")) {
+        downloadKeyAsTxt(result);
+      }
     }
   };
+  
 
   const encryptText = async () => {
     setError('');

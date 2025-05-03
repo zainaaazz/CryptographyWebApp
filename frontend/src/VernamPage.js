@@ -42,6 +42,49 @@ export default function VernamPage() {
     if (keyFileInputRef.current) keyFileInputRef.current.value = "";
   };
 
+  const handleTextEncryption = () => {
+    setError("");
+    setMessage("");
+  
+    if (!plaintext || !realKey || plaintext.length !== realKey.length) {
+      return setError("Key must be the same length as plaintext.");
+    }
+  
+    const encrypted = Array.from(plaintext)
+      .map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ realKey.charCodeAt(i)))
+      .join("");
+  
+    const base64 = btoa(encrypted);
+    setCiphertext(base64);
+    setMessage("✔ Text encrypted successfully.");
+  };
+  
+  const handleTextDecryption = () => {
+    setError("");
+    setMessage("");
+  
+    if (!ciphertext || !realKey) {
+      return setError("Please provide ciphertext and key.");
+    }
+  
+    try {
+      const decoded = atob(ciphertext);
+      if (decoded.length !== realKey.length) {
+        return setError("Key must be the same length as decoded ciphertext.");
+      }
+  
+      const decrypted = Array.from(decoded)
+        .map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ realKey.charCodeAt(i)))
+        .join("");
+  
+      setDecryptedText(decrypted);
+      setMessage("✔ Text decrypted successfully.");
+    } catch (err) {
+      setError("Invalid Base64 ciphertext.");
+    }
+  };
+  
+
   const generateKey = async (length) => {
     setError("");
     setMessage("");
@@ -255,10 +298,11 @@ export default function VernamPage() {
             </div>
             <button
               className="btn btn-success"
-              onClick={() => encryptOrDecryptFile("encrypt")}
+              onClick={handleTextEncryption}
             >
               Encrypt
             </button>
+
             <p className="mt-3">
               <strong>Ciphertext:</strong> <code>{ciphertext}</code>
             </p>
@@ -281,9 +325,9 @@ export default function VernamPage() {
                 setRealKey(e.target.value);
               }}
             />
-            <button className="btn btn-warning" onClick={encryptOrDecryptFile}>
-              Decrypt
-            </button>
+            <button className="btn btn-warning" onClick={handleTextDecryption}>
+                Decrypt
+              </button>
             <p className="mt-3">
               <strong>Decrypted:</strong> <code>{decryptedText}</code>
             </p>

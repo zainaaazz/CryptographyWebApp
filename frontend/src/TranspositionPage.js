@@ -277,7 +277,8 @@ export default function TranspositionPage() {
 
   return (
     <div className="page-container">
-      <h1>Transposition Cipher</h1>
+    
+      <h1 className="text-light text-center">Transposition Cipher</h1>
       <p className="description">
         The Transposition Cipher rearranges the letters of the plaintext
         according to a keyword. The process consists of three parts:

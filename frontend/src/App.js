@@ -9,11 +9,12 @@ import {
 import AESPage from "./AESPage";
 import DESPage from "./DESPage";
 import CaesarPage from "./CaesarPage";
-import CustomPage from "./CustomPage";
+import TranspositionPage from "./TranspositionPage";
 import VernamPage from "./VernamPage";
 import VigenerePage from "./VigenerePage";
+import CustomPage from "./CustomPage";
 import CustomPage2 from "./CustomPage2";
-import TranspositionPage from "./TranspositionPage";
+
 
 import { Lock, ShieldCheck, KeyRound } from "lucide-react"; // icons
 import Header from "./Header";

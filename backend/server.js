@@ -15,9 +15,15 @@ app.use(
 );
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
 const upload = multer({
+  storage: storage,
   limits: {
-    fieldSize: 100 * 1024 * 1024, // allow up to 100MB for text fields like the key
+    fileSize: 100 * 1024 * 1024, // 100MB max file size
+    fieldSize: 100 * 1024 * 1024, // 100MB max field size
   },
 });
 
@@ -1176,6 +1182,212 @@ app.post("/decrypt/transposition", (req, res) => {
         error.message ||
         "Failed to decrypt text. Please check your input and try again.",
     });
+  }
+});
+
+/**
+ * @swagger
+ * /encrypt-file/transposition:
+ *   post:
+ *     summary: Encrypt file using Transposition Cipher
+ *     tags: [Transposition]
+ *     description: Encrypts an uploaded file using Transposition Cipher with a keyword.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns encrypted file
+ */
+app.post("/encrypt-file/transposition", upload.single("file"), (req, res) => {
+  const { key } = req.body;
+  const file = req.file;
+
+  if (!file || !key) {
+    console.error("Missing file or key:", { file: !!file, key: !!key });
+    return res.status(400).send("Missing file or key");
+  }
+
+  if (!validateKey(key)) {
+    console.error("Invalid key:", key);
+    return res
+      .status(400)
+      .send(
+        "Invalid key. Key must be a string with at least 2 unique alphabetic characters."
+      );
+  }
+
+  try {
+    console.log("Processing file:", {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    });
+
+    // Check if the file is a text file
+    const isTextFile =
+      file.mimetype.startsWith("text/") ||
+      file.mimetype === "application/json" ||
+      file.mimetype === "application/xml";
+
+    if (isTextFile) {
+      // Handle text files
+      const fileContent = file.buffer.toString("utf8");
+      const encryptedContent = transposeText(fileContent, key);
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=encrypted_${file.originalname}`
+      );
+      res.setHeader("Content-Type", "text/plain");
+      res.send(Buffer.from(encryptedContent));
+    } else {
+      // Handle binary files
+      // Convert buffer to base64 string
+      const base64Content = file.buffer.toString("base64");
+
+      // Split the base64 into chunks that are multiples of the key length
+      const keyLength = key.length;
+      const chunks = [];
+      for (let i = 0; i < base64Content.length; i += keyLength) {
+        chunks.push(base64Content.slice(i, i + keyLength));
+      }
+
+      // Encrypt each chunk
+      const encryptedChunks = chunks.map((chunk) => transposeText(chunk, key));
+      const encryptedBase64 = encryptedChunks.join("");
+
+      // Convert back to binary
+      const encryptedBuffer = Buffer.from(encryptedBase64, "base64");
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=encrypted_${file.originalname}`
+      );
+      res.setHeader(
+        "Content-Type",
+        file.mimetype || "application/octet-stream"
+      );
+      res.send(encryptedBuffer);
+    }
+  } catch (error) {
+    console.error("File encryption error:", error);
+    res
+      .status(500)
+      .send("Failed to encrypt file. Please check your input and try again.");
+  }
+});
+
+/**
+ * @swagger
+ * /decrypt-file/transposition:
+ *   post:
+ *     summary: Decrypt file encrypted with Transposition Cipher
+ *     tags: [Transposition]
+ *     description: Decrypts a Transposition-encrypted file using the keyword.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *               key:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Returns decrypted file
+ */
+app.post("/decrypt-file/transposition", upload.single("file"), (req, res) => {
+  const { key } = req.body;
+  const file = req.file;
+
+  if (!file || !key) {
+    console.error("Missing file or key:", { file: !!file, key: !!key });
+    return res.status(400).send("Missing file or key");
+  }
+
+  if (!validateKey(key)) {
+    console.error("Invalid key:", key);
+    return res
+      .status(400)
+      .send(
+        "Invalid key. Key must be a string with at least 2 unique alphabetic characters."
+      );
+  }
+
+  try {
+    console.log("Processing file:", {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+    });
+
+    // Check if the file is a text file
+    const isTextFile =
+      file.mimetype.startsWith("text/") ||
+      file.mimetype === "application/json" ||
+      file.mimetype === "application/xml";
+
+    if (isTextFile) {
+      // Handle text files
+      const fileContent = file.buffer.toString("utf8");
+      const decryptedContent = transposeText(fileContent, key, true);
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=decrypted_${file.originalname}`
+      );
+      res.setHeader("Content-Type", "text/plain");
+      res.send(Buffer.from(decryptedContent));
+    } else {
+      // Handle binary files
+      // Convert buffer to base64 string
+      const base64Content = file.buffer.toString("base64");
+
+      // Split the base64 into chunks that are multiples of the key length
+      const keyLength = key.length;
+      const chunks = [];
+      for (let i = 0; i < base64Content.length; i += keyLength) {
+        chunks.push(base64Content.slice(i, i + keyLength));
+      }
+
+      // Decrypt each chunk
+      const decryptedChunks = chunks.map((chunk) =>
+        transposeText(chunk, key, true)
+      );
+      const decryptedBase64 = decryptedChunks.join("");
+
+      // Convert back to binary
+      const decryptedBuffer = Buffer.from(decryptedBase64, "base64");
+
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=decrypted_${file.originalname}`
+      );
+      res.setHeader(
+        "Content-Type",
+        file.mimetype || "application/octet-stream"
+      );
+      res.send(decryptedBuffer);
+    }
+  } catch (error) {
+    console.error("File decryption error:", error);
+    res
+      .status(500)
+      .send("Failed to decrypt file. Please check your input and try again.");
   }
 });
 

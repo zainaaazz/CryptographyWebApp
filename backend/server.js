@@ -8,18 +8,18 @@ const swaggerDocs = require("./swagger");
 const app = express();
 const port = 5000;
 
-app.use(cors({
-  exposedHeaders: ['Content-Disposition']
-}));
+app.use(
+  cors({
+    exposedHeaders: ["Content-Disposition"],
+  })
+);
 
 app.use(express.json());
 const upload = multer({
   limits: {
-    fieldSize: 100 * 1024 * 1024 // allow up to 100MB for text fields like the key
-  }
+    fieldSize: 100 * 1024 * 1024, // allow up to 100MB for text fields like the key
+  },
 });
-
-
 
 /* ---------------- AES ---------------- */
 
@@ -53,7 +53,6 @@ const upload = multer({
  *         description: Returns AES-encrypted ciphertext
  */
 
-
 app.post("/encrypt/aes", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || key.length !== 16)
@@ -86,7 +85,6 @@ app.post("/encrypt/aes", (req, res) => {
  *         description: Returns decrypted plaintext
  */
 
-
 app.post("/decrypt/aes", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || key.length !== 16)
@@ -96,7 +94,6 @@ app.post("/decrypt/aes", (req, res) => {
   const plaintext = bytes.toString(CryptoJS.enc.Utf8);
   res.json({ plaintext });
 });
-
 
 /**
  * @swagger
@@ -122,7 +119,6 @@ app.post("/decrypt/aes", (req, res) => {
  *         description: Returns encrypted file
  */
 
-
 app.post("/encrypt-file/aes", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
@@ -132,12 +128,13 @@ app.post("/encrypt-file/aes", upload.single("file"), (req, res) => {
   const cipher = crypto.createCipheriv("aes-128-ecb", Buffer.from(key), null);
   const encrypted = Buffer.concat([cipher.update(file.buffer), cipher.final()]);
 
-  res.setHeader("Content-Disposition", `attachment; filename=encrypted_${file.originalname}`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=encrypted_${file.originalname}`
+  );
   res.setHeader("Content-Type", "application/octet-stream");
   res.send(encrypted);
-  
 });
-
 
 /**
  * @swagger
@@ -169,10 +166,20 @@ app.post("/decrypt-file/aes", upload.single("file"), (req, res) => {
   if (!file || key.length !== 16)
     return res.status(400).send("Invalid file or AES key");
 
-  const decipher = crypto.createDecipheriv("aes-128-ecb", Buffer.from(key), null);
-  const decrypted = Buffer.concat([decipher.update(file.buffer), decipher.final()]);
+  const decipher = crypto.createDecipheriv(
+    "aes-128-ecb",
+    Buffer.from(key),
+    null
+  );
+  const decrypted = Buffer.concat([
+    decipher.update(file.buffer),
+    decipher.final(),
+  ]);
 
-  res.setHeader("Content-Disposition", `attachment; filename=decrypted_${file.originalname}`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=decrypted_${file.originalname}`
+  );
   res.send(decrypted);
 });
 
@@ -184,7 +191,6 @@ app.post("/decrypt-file/aes", upload.single("file"), (req, res) => {
  *   name: DES
  *   description: DES (TripleDES) encryption and decryption
  */
-
 
 /**
  * @swagger
@@ -218,7 +224,6 @@ app.post("/encrypt/des", (req, res) => {
   res.json({ ciphertext });
 });
 
-
 /**
  * @swagger
  * /decrypt/des:
@@ -242,9 +247,6 @@ app.post("/encrypt/des", (req, res) => {
  *         description: Returns decrypted plaintext
  */
 
-
-
-
 app.post("/decrypt/des", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || key.length !== 24)
@@ -254,7 +256,6 @@ app.post("/decrypt/des", (req, res) => {
   const plaintext = bytes.toString(CryptoJS.enc.Utf8);
   res.json({ plaintext });
 });
-
 
 /**
  * @swagger
@@ -280,7 +281,6 @@ app.post("/decrypt/des", (req, res) => {
  *         description: Returns encrypted file
  */
 
-
 app.post("/encrypt-file/des", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
@@ -290,10 +290,12 @@ app.post("/encrypt-file/des", upload.single("file"), (req, res) => {
   const cipher = crypto.createCipheriv("des-ede3", Buffer.from(key), null);
   const encrypted = Buffer.concat([cipher.update(file.buffer), cipher.final()]);
 
-  res.setHeader("Content-Disposition", `attachment; filename=encrypted_${file.originalname}`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=encrypted_${file.originalname}`
+  );
   res.send(encrypted);
 });
-
 
 /**
  * @swagger
@@ -326,9 +328,15 @@ app.post("/decrypt-file/des", upload.single("file"), (req, res) => {
     return res.status(400).send("Invalid file or DES key");
 
   const decipher = crypto.createDecipheriv("des-ede3", Buffer.from(key), null);
-  const decrypted = Buffer.concat([decipher.update(file.buffer), decipher.final()]);
+  const decrypted = Buffer.concat([
+    decipher.update(file.buffer),
+    decipher.final(),
+  ]);
 
-  res.setHeader("Content-Disposition", `attachment; filename=decrypted_${file.originalname}`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=decrypted_${file.originalname}`
+  );
   res.send(decrypted);
 });
 
@@ -341,7 +349,6 @@ app.post("/decrypt-file/des", upload.single("file"), (req, res) => {
  *   description: Vernam (XOR) encryption and decryption
  */
 
-
 function xorBuffer(buffer, keyBuffer) {
   const result = Buffer.alloc(buffer.length);
   for (let i = 0; i < buffer.length; i++) {
@@ -349,8 +356,6 @@ function xorBuffer(buffer, keyBuffer) {
   }
   return result;
 }
-
-
 
 /**
  * @swagger
@@ -375,18 +380,16 @@ function xorBuffer(buffer, keyBuffer) {
  *         description: Returns base64-encoded ciphertext
  */
 
-
-
-app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
+app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
   const fileBuffer = req.file?.buffer;
   const rawKey = req.body?.key;
 
   if (!fileBuffer || !rawKey) {
     console.error("❌ Missing file or key in request.");
-    return res.status(400).send('Missing file or key.');
+    return res.status(400).send("Missing file or key.");
   }
 
-  const key = Buffer.from(rawKey, 'latin1');
+  const key = Buffer.from(rawKey, "latin1");
 
   console.log("🔐 ENCRYPT FILE (VERNAM)");
   console.log("📄 File size:", fileBuffer.length);
@@ -395,7 +398,11 @@ app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
 
   if (key.length !== fileBuffer.length) {
     console.error("❌ Key and file size mismatch.");
-    return res.status(400).send(`Key must be the same length as the file. Received key length: ${key.length}, expected: ${fileBuffer.length}`);
+    return res
+      .status(400)
+      .send(
+        `Key must be the same length as the file. Received key length: ${key.length}, expected: ${fileBuffer.length}`
+      );
   }
 
   const encryptedBuffer = Buffer.alloc(fileBuffer.length);
@@ -403,15 +410,16 @@ app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
     encryptedBuffer[i] = fileBuffer[i] ^ key[i];
   }
 
-  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
-  const extension = req.file.originalname.split('.').pop();
-  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamEncrypted.${extension}"`);
-  res.setHeader('Content-Type', 'application/octet-stream');
+  const originalName =
+    req.file.originalname.split(".").slice(0, -1).join(".") || "file";
+  const extension = req.file.originalname.split(".").pop();
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${originalName} - VernamEncrypted.${extension}"`
+  );
+  res.setHeader("Content-Type", "application/octet-stream");
   res.send(encryptedBuffer);
 });
-
-
-
 
 /**
  * @swagger
@@ -436,17 +444,16 @@ app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
  *         description: Returns decrypted plaintext
  */
 
-
-app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
+app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
   const encryptedBuffer = req.file?.buffer;
   const rawKey = req.body?.key;
 
   if (!encryptedBuffer || !rawKey) {
     console.error("❌ Missing file or key in request.");
-    return res.status(400).send('Missing file or key.');
+    return res.status(400).send("Missing file or key.");
   }
 
-  const key = Buffer.from(rawKey, 'latin1');
+  const key = Buffer.from(rawKey, "latin1");
 
   console.log("🔐 DECRYPT FILE (VERNAM)");
   console.log("📄 File size:", encryptedBuffer.length);
@@ -455,7 +462,11 @@ app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
 
   if (key.length !== encryptedBuffer.length) {
     console.error("❌ Key and file size mismatch.");
-    return res.status(400).send(`Key must be the same length as the file. Received key length: ${key.length}, expected: ${encryptedBuffer.length}`);
+    return res
+      .status(400)
+      .send(
+        `Key must be the same length as the file. Received key length: ${key.length}, expected: ${encryptedBuffer.length}`
+      );
   }
 
   const decryptedBuffer = Buffer.alloc(encryptedBuffer.length);
@@ -463,10 +474,14 @@ app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
     decryptedBuffer[i] = encryptedBuffer[i] ^ key[i];
   }
 
-  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
-  const extension = req.file.originalname.split('.').pop();
-  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamDecrypted.${extension}"`);
-  res.setHeader('Content-Type', 'application/octet-stream');
+  const originalName =
+    req.file.originalname.split(".").slice(0, -1).join(".") || "file";
+  const extension = req.file.originalname.split(".").pop();
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${originalName} - VernamDecrypted.${extension}"`
+  );
+  res.setHeader("Content-Type", "application/octet-stream");
   res.send(decryptedBuffer);
 });
 
@@ -494,14 +509,12 @@ app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
  *         description: Returns encrypted file
  */
 
-
-
-app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
+app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
   const fileBuffer = req.file.buffer;
-  const key = Buffer.from(req.body.key, 'latin1');
+  const key = Buffer.from(req.body.key, "latin1");
 
   if (key.length !== fileBuffer.length) {
-    return res.status(400).send('Key must be the same length as the file.');
+    return res.status(400).send("Key must be the same length as the file.");
   }
 
   const encryptedBuffer = Buffer.alloc(fileBuffer.length);
@@ -509,16 +522,17 @@ app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
     encryptedBuffer[i] = fileBuffer[i] ^ key[i];
   }
 
-  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
-  const extension = req.file.originalname.split('.').pop();
-  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamEncrypted.${extension}"`);
-  
-  res.setHeader('Content-Type', 'application/octet-stream');
+  const originalName =
+    req.file.originalname.split(".").slice(0, -1).join(".") || "file";
+  const extension = req.file.originalname.split(".").pop();
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${originalName} - VernamEncrypted.${extension}"`
+  );
+
+  res.setHeader("Content-Type", "application/octet-stream");
   res.send(encryptedBuffer);
 });
-
-
-
 
 /**
  * @swagger
@@ -544,13 +558,12 @@ app.post('/encrypt-file/vernam', upload.single('file'), (req, res) => {
  *         description: Returns decrypted file
  */
 
-
-app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
+app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
   const encryptedBuffer = req.file.buffer;
-  const key = Buffer.from(req.body.key, 'latin1');
+  const key = Buffer.from(req.body.key, "latin1");
 
   if (key.length !== encryptedBuffer.length) {
-    return res.status(400).send('Key must be the same length as the file.');
+    return res.status(400).send("Key must be the same length as the file.");
   }
 
   const decryptedBuffer = Buffer.alloc(encryptedBuffer.length);
@@ -558,40 +571,39 @@ app.post('/decrypt-file/vernam', upload.single('file'), (req, res) => {
     decryptedBuffer[i] = encryptedBuffer[i] ^ key[i];
   }
 
-  const originalName = req.file.originalname.split('.').slice(0, -1).join('.') || 'file';
-  const extension = req.file.originalname.split('.').pop();
-  res.setHeader('Content-Disposition', `attachment; filename="${originalName} - VernamDecrypted.${extension}"`);
+  const originalName =
+    req.file.originalname.split(".").slice(0, -1).join(".") || "file";
+  const extension = req.file.originalname.split(".").pop();
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="${originalName} - VernamDecrypted.${extension}"`
+  );
 
-  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader("Content-Type", "application/octet-stream");
   res.send(decryptedBuffer);
 });
 
+app.post("/generate-vernam-key", (req, res) => {
+  console.log("Body received:", req.body);
 
-
-app.post('/generate-vernam-key', (req, res) => {
-  console.log('Body received:', req.body);
-  
   const { fileSize } = req.body;
-  
+
   if (!fileSize || isNaN(fileSize)) {
-    return res.status(400).send('Invalid file size');
+    return res.status(400).send("Invalid file size");
   }
-  
+
   const size = parseInt(fileSize);
-  
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?';
-  let key = '';
-  
+
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}|;:,.<>?";
+  let key = "";
+
   for (let i = 0; i < size; i++) {
     key += characters.charAt(Math.floor(Math.random() * characters.length));
   }
 
   res.send(key);
 });
-
-
-
-
 
 /* ---------------- Vigenere ---------------- */
 
@@ -606,13 +618,10 @@ function vigenereBuffer(buffer, key, decrypt = false) {
   const output = Buffer.alloc(buffer.length);
   for (let i = 0; i < buffer.length; i++) {
     const k = key[i % key.length].toLowerCase().charCodeAt(0) - 97;
-    output[i] = decrypt
-      ? (buffer[i] - k + 256) % 256
-      : (buffer[i] + k) % 256;
+    output[i] = decrypt ? (buffer[i] - k + 256) % 256 : (buffer[i] + k) % 256;
   }
   return output;
 }
-
 
 /**
  * @swagger
@@ -637,13 +646,16 @@ function vigenereBuffer(buffer, key, decrypt = false) {
  *         description: Returns Vigenère-encrypted ciphertext
  */
 
-
 app.post("/encrypt/vigenere", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || !key)
     return res.status(400).json({ error: "Missing data." });
 
-  const ciphertext = vigenereBuffer(Buffer.from(plaintext), key, false).toString("base64");
+  const ciphertext = vigenereBuffer(
+    Buffer.from(plaintext),
+    key,
+    false
+  ).toString("base64");
   res.json({ ciphertext });
 });
 
@@ -670,7 +682,6 @@ app.post("/encrypt/vigenere", (req, res) => {
  *         description: Returns decrypted plaintext
  */
 
-
 app.post("/decrypt/vigenere", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || !key)
@@ -680,7 +691,6 @@ app.post("/decrypt/vigenere", (req, res) => {
   const plaintext = vigenereBuffer(decoded, key, true).toString();
   res.json({ plaintext });
 });
-
 
 /**
  * @swagger
@@ -706,18 +716,18 @@ app.post("/decrypt/vigenere", (req, res) => {
  *         description: Returns encrypted file
  */
 
-
 app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
-  if (!file || !key)
-    return res.status(400).send("Missing file or key.");
+  if (!file || !key) return res.status(400).send("Missing file or key.");
 
   const encrypted = vigenereBuffer(file.buffer, key, false);
-  res.setHeader("Content-Disposition", `attachment; filename=encrypted_${file.originalname}`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=encrypted_${file.originalname}`
+  );
   res.send(encrypted);
 });
-
 
 /**
  * @swagger
@@ -743,23 +753,20 @@ app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
  *         description: Returns decrypted file
  */
 
-
 app.post("/decrypt-file/vigenere", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
-  if (!file || !key)
-    return res.status(400).send("Missing file or key.");
+  if (!file || !key) return res.status(400).send("Missing file or key.");
 
   const decrypted = vigenereBuffer(file.buffer, key, true);
-  res.setHeader("Content-Disposition", `attachment; filename=decrypted_${file.originalname}`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=decrypted_${file.originalname}`
+  );
   res.send(decrypted);
 });
 
-
-
 /* ---------------- Caesar ---------------- */
-
-
 
 const caesarShift = (text, shift, decrypt = false) => {
   if (decrypt) shift = (26 - shift) % 26;
@@ -801,7 +808,6 @@ const caesarShift = (text, shift, decrypt = false) => {
  *         description: Returns Caesar-encrypted ciphertext
  */
 
-
 app.post("/encrypt/caesar", (req, res) => {
   const { plaintext, shift } = req.body;
   const shiftValue = parseInt(shift);
@@ -809,7 +815,6 @@ app.post("/encrypt/caesar", (req, res) => {
     return res.status(400).json({ error: "Invalid Caesar key" });
   res.json({ ciphertext: caesarShift(plaintext, shift) });
 });
-
 
 /**
  * @swagger
@@ -834,29 +839,25 @@ app.post("/encrypt/caesar", (req, res) => {
  *         description: Returns decrypted plaintext
  */
 
- 
-
 app.post("/decrypt/caesar", (req, res) => {
   const { ciphertext, shift } = req.body;
   const shiftValue = parseInt(shift);
   if (!ciphertext || isNaN(shift))
     return res.status(400).json({ error: "Invalid Caesar key" });
   res.json({ plaintext: caesarShift(ciphertext, shift, true) });
-  res.setHeader("Content-Disposition", `attachment; filename=decrypted_${file.originalname}`);
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=decrypted_${file.originalname}`
+  );
   res.send(decrypted);
 });
-
-
-
-
-
 
 function mutateBuffer(buffer, key, decrypt = false) {
   const mutated = [];
   const interval = (key.length % 50) + 50;
   const noiseChar = 42;
 
-  console.log(`🔧 Mode: ${decrypt ? 'Decrypt' : 'Encrypt'}`);
+  console.log(`🔧 Mode: ${decrypt ? "Decrypt" : "Encrypt"}`);
   console.log(`📄 Buffer length: ${buffer.length}`);
   console.log(`🔑 Key length: ${key.length}`);
   console.log(`📐 Noise interval: ${interval}`);
@@ -881,29 +882,36 @@ function mutateBuffer(buffer, key, decrypt = false) {
   return Buffer.from(mutated);
 }
 
-
 app.post("/encrypt/custom", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || !key) return res.status(400).send("Missing data.");
-  let substituted = plaintext.replace(/[a-z]/gi, c => String.fromCharCode(c.charCodeAt(0) ^ 5));
-  let transposed = substituted.split('').reverse().join('');
-  let noisy = transposed.split('').map((c, i) => (i + 1) % ((key.length % 3) + 2) === 0 ? c + '*' : c).join('');
-  res.json({ ciphertext: Buffer.from(noisy).toString('base64') });
+  let substituted = plaintext.replace(/[a-z]/gi, (c) =>
+    String.fromCharCode(c.charCodeAt(0) ^ 5)
+  );
+  let transposed = substituted.split("").reverse().join("");
+  let noisy = transposed
+    .split("")
+    .map((c, i) => ((i + 1) % ((key.length % 3) + 2) === 0 ? c + "*" : c))
+    .join("");
+  res.json({ ciphertext: Buffer.from(noisy).toString("base64") });
 });
 
 app.post("/decrypt/custom", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || !key) return res.status(400).send("Missing data.");
   try {
-    let decoded = Buffer.from(ciphertext, 'base64').toString();
-    let denoised = decoded.replace(/\*/g, '');
-    let original = denoised.split('').reverse().join('').replace(/./g, c => String.fromCharCode(c.charCodeAt(0) ^ 5));
+    let decoded = Buffer.from(ciphertext, "base64").toString();
+    let denoised = decoded.replace(/\*/g, "");
+    let original = denoised
+      .split("")
+      .reverse()
+      .join("")
+      .replace(/./g, (c) => String.fromCharCode(c.charCodeAt(0) ^ 5));
     res.json({ plaintext: original });
   } catch {
     res.status(400).send("Decryption failed.");
   }
 });
-
 
 app.post("/encrypt-file/custom", upload.single("file"), (req, res) => {
   const file = req.file;
@@ -920,8 +928,8 @@ app.post("/encrypt-file/custom", upload.single("file"), (req, res) => {
 
     // ✅ SET HEADERS ONCE — NO DUPLICATES
     res.set({
-      'Content-Disposition': `attachment; filename="encrypted_${file.originalname}"`,
-      'Content-Type': 'application/octet-stream'
+      "Content-Disposition": `attachment; filename="encrypted_${file.originalname}"`,
+      "Content-Type": "application/octet-stream",
     });
 
     res.send(encrypted);
@@ -930,7 +938,6 @@ app.post("/encrypt-file/custom", upload.single("file"), (req, res) => {
     res.status(500).send("Encryption failed.");
   }
 });
-
 
 app.post("/decrypt-file/custom", upload.single("file"), (req, res) => {
   const file = req.file;
@@ -946,8 +953,8 @@ app.post("/decrypt-file/custom", upload.single("file"), (req, res) => {
     const decrypted = mutateBuffer(file.buffer, key, true);
 
     res.set({
-      'Content-Disposition': `attachment; filename="decrypted_${file.originalname}"`,
-      'Content-Type': 'application/octet-stream'
+      "Content-Disposition": `attachment; filename="decrypted_${file.originalname}"`,
+      "Content-Type": "application/octet-stream",
     });
 
     res.send(decrypted);
@@ -957,7 +964,220 @@ app.post("/decrypt-file/custom", upload.single("file"), (req, res) => {
   }
 });
 
+/* ---------------- Transposition Cipher ---------------- */
 
+/**
+ * @swagger
+ * tags:
+ *   name: Transposition
+ *   description: Transposition cipher encryption and decryption
+ */
+
+/**
+ * @swagger
+ * /encrypt/transposition:
+ *   post:
+ *     summary: Encrypt plaintext using Transposition Cipher
+ *     tags: [Transposition]
+ *     description: Encrypts a plaintext string using Transposition Cipher with a numeric key.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plaintext:
+ *                 type: string
+ *               key:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Returns transposition-encrypted ciphertext
+ */
+
+function validateKey(key) {
+  if (typeof key !== "string") return false;
+  const letters = key.replace(/[^a-zA-Z]/g, "");
+  const unique = new Set(letters.toUpperCase().split(""));
+  return letters.length >= 2 && unique.size >= 2;
+}
+
+// Columnar Transposition Cipher implementation
+function transposeText(text, key, decrypt = false) {
+  try {
+    if (!text || !key) {
+      throw new Error("Missing text or key");
+    }
+
+    console.log("Input text:", text);
+    console.log("Input key:", key);
+
+    // Replace spaces with underscores for consistent handling
+    const processedText = text.replace(/\s+/g, "_");
+    console.log("Processed text:", processedText);
+
+    const keyChars = key.toUpperCase().split("");
+    const keyLength = keyChars.length;
+    console.log("Key length:", keyLength);
+
+    if (keyLength < 2) {
+      throw new Error("Keyword must have at least 2 unique characters");
+    }
+
+    // Create a mapping of characters to their order
+    const charOrder = {};
+    const uniqueChars = [...new Set(keyChars)].sort();
+    uniqueChars.forEach((char, index) => {
+      charOrder[char] = index;
+    });
+
+    // Create column order based on the key
+    const columnOrder = keyChars.map((char) => charOrder[char]);
+    console.log("Column order:", columnOrder);
+
+    if (!decrypt) {
+      // Encryption
+      const numRows = Math.ceil(processedText.length / keyLength);
+      console.log("Number of rows:", numRows);
+
+      const paddedText = processedText.padEnd(numRows * keyLength, "_");
+      console.log("Padded text:", paddedText);
+
+      // Create the matrix
+      const matrix = [];
+      for (let i = 0; i < numRows; i++) {
+        const row = paddedText.slice(i * keyLength, (i + 1) * keyLength);
+        matrix.push(row);
+        console.log(`Row ${i}:`, row);
+      }
+
+      // Read columns in order
+      let ciphertext = "";
+      for (let order = 0; order < keyLength; order++) {
+        const colIndex = columnOrder.indexOf(order);
+        console.log(`Reading column ${colIndex} (order ${order})`);
+        for (let row = 0; row < numRows; row++) {
+          const char = matrix[row][colIndex];
+          ciphertext += char;
+          console.log(`  Row ${row}: ${char}`);
+        }
+      }
+      console.log("Generated ciphertext:", ciphertext);
+      return ciphertext;
+    } else {
+      // Decryption
+      const numRows = Math.ceil(processedText.length / keyLength);
+      console.log("Number of rows:", numRows);
+
+      // Calculate column lengths
+      const colLens = Array(keyLength).fill(
+        Math.floor(processedText.length / keyLength)
+      );
+      const extraChars = processedText.length % keyLength;
+
+      // Distribute extra characters to columns
+      for (let i = 0; i < extraChars; i++) {
+        const colIndex = columnOrder.indexOf(i);
+        if (colIndex !== -1) {
+          colLens[colIndex]++;
+        }
+      }
+      console.log("Column lengths:", colLens);
+
+      // Fill columns
+      const cols = [];
+      let pos = 0;
+      for (let order = 0; order < keyLength; order++) {
+        const colIndex = columnOrder.indexOf(order);
+        const len = colLens[colIndex];
+        const columnContent = processedText.slice(pos, pos + len);
+        cols[colIndex] = columnContent.split("");
+        console.log(`Column ${colIndex} (order ${order}):`, columnContent);
+        pos += len;
+      }
+
+      // Reconstruct the matrix
+      let plaintext = "";
+      for (let row = 0; row < numRows; row++) {
+        for (let col = 0; col < keyLength; col++) {
+          if (cols[col] && cols[col][row]) {
+            plaintext += cols[col][row];
+          }
+        }
+      }
+      console.log("Generated plaintext:", plaintext);
+      return plaintext.replace(/_/g, " ");
+    }
+  } catch (error) {
+    console.error("Transposition cipher error:", error);
+    console.error("Error stack:", error.stack);
+    throw error;
+  }
+}
+
+app.post("/encrypt/transposition", (req, res) => {
+  console.log("Encryption request received:", req.body);
+  const { plaintext, key } = req.body;
+
+  if (!plaintext || !key) {
+    console.log("Missing input:", { plaintext, key });
+    return res.status(400).json({
+      error: "Missing plaintext or key",
+    });
+  }
+
+  if (!validateKey(key)) {
+    console.log("Invalid key:", key);
+    return res.status(400).json({
+      error:
+        "Invalid key. Key must be a string with at least 2 unique alphabetic characters.",
+    });
+  }
+
+  try {
+    const ciphertext = transposeText(plaintext, key);
+    console.log("Encryption successful");
+    res.json({ ciphertext });
+  } catch (error) {
+    console.error("Encryption error:", error);
+    console.error("Error stack:", error.stack);
+    res.status(500).json({
+      error:
+        error.message ||
+        "Failed to encrypt text. Please check your input and try again.",
+    });
+  }
+});
+
+app.post("/decrypt/transposition", (req, res) => {
+  const { ciphertext, key } = req.body;
+
+  if (!ciphertext || !key) {
+    return res.status(400).json({
+      error: "Missing ciphertext or key",
+    });
+  }
+
+  if (!validateKey(key)) {
+    return res.status(400).json({
+      error:
+        "Invalid key. Key must be a string with at least 2 unique alphabetic characters.",
+    });
+  }
+
+  try {
+    const plaintext = transposeText(ciphertext, key, true);
+    res.json({ plaintext });
+  } catch (error) {
+    console.error("Decryption error:", error);
+    res.status(500).json({
+      error:
+        error.message ||
+        "Failed to decrypt text. Please check your input and try again.",
+    });
+  }
+});
 
 // Swagger docs
 swaggerDocs(app);

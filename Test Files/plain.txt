@@ -1,0 +1,84 @@
+Keyword: "KEY"
+Text: "HELLO WORLD"
+
+Initial:
+1. Replace spaces: "HELLO_WORLD"
+2. Create Matrix:
+   K E Y
+   1 0 2
+   H E L
+   L O _
+   W O R
+   L D _
+
+3. Read columns in order (1,0,2):
+   HLWL EOOD L_R_
+
+Encryption:
+1. Encrypt by order: 0, 1, 2
+2. Create Matrix:
+   E K Y
+   0 1 2
+   E H L
+   O L _
+   O W R
+   D L _
+  
+
+3. Read columns in order (0, 1, 2):
+   EOOD HLWL L_R_
+
+Decryption:
+1. Calculate column lengths:
+   - Base length: 5 (15 chars / 3 columns)
+   - Extra chars: 0
+   - Column lengths: [5, 5, 5]
+
+2. Fill columns in key order:
+   Column 1 (K): "HLWL"
+   Column 0 (E): "EOOD"
+   Column 2 (Y): "L_R_"
+
+3. Read row by row:
+   "HELLO_WORLD"
+
+4. Convert underscores back to spaces:
+   "HELLO WORLD"
+
+-------------------------------------------------------------------------------------------------------------------
+
+Keyword: "KEY"
+Text: "HELLO WORLD"
+
+Encryption:
+1. Replace spaces: "HELLO_WORLD"
+2. Create matrix:
+   K E Y
+   1 0 2
+   H E L
+   L O _
+   W O R
+   L D _
+
+3. Read columns in order (0,1,2):
+   EOOD HLWL L_R_
+
+Decryption:
+1. Calculate column lengths:
+   - Base length: 5 (15 chars / 3 columns)
+   - Extra chars: 0
+   - Column lengths: [5, 5, 5]
+
+2. Fill columns in key order:
+   E K Y
+   0 1 2
+   E H L
+   O L _
+   O W R
+   D L _   
+
+3. Read row by row:
+   "HELLO_WORLD"
+
+4. Convert underscores back to spaces:
+   "HELLO WORLD"

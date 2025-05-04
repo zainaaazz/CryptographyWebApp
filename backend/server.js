@@ -1252,22 +1252,50 @@ app.post("/encrypt-file/transposition", upload.single("file"), (req, res) => {
       res.send(Buffer.from(encryptedContent));
     } else {
       // Handle binary files
-      // Convert buffer to base64 string
-      const base64Content = file.buffer.toString("base64");
-
-      // Split the base64 into chunks that are multiples of the key length
+      const buffer = file.buffer;
       const keyLength = key.length;
-      const chunks = [];
-      for (let i = 0; i < base64Content.length; i += keyLength) {
-        chunks.push(base64Content.slice(i, i + keyLength));
+
+      // Process the buffer in chunks that are multiples of the key length
+      const chunkSize = Math.ceil(buffer.length / keyLength) * keyLength;
+      const paddedBuffer = Buffer.alloc(chunkSize);
+      buffer.copy(paddedBuffer);
+
+      // Create a matrix for transposition
+      const numRows = Math.ceil(chunkSize / keyLength);
+      const matrix = Array(numRows)
+        .fill()
+        .map(() => Array(keyLength).fill(0));
+
+      // Fill the matrix row by row
+      for (let row = 0; row < numRows; row++) {
+        for (let col = 0; col < keyLength; col++) {
+          const index = row * keyLength + col;
+          if (index < buffer.length) {
+            matrix[row][col] = buffer[index];
+          }
+        }
       }
 
-      // Encrypt each chunk
-      const encryptedChunks = chunks.map((chunk) => transposeText(chunk, key));
-      const encryptedBase64 = encryptedChunks.join("");
+      // Create column order based on the key
+      const keyChars = key.toUpperCase().split("");
+      const charOrder = {};
+      const uniqueChars = [...new Set(keyChars)].sort();
+      uniqueChars.forEach((char, index) => {
+        charOrder[char] = index;
+      });
+      const columnOrder = keyChars.map((char) => charOrder[char]);
 
-      // Convert back to binary
-      const encryptedBuffer = Buffer.from(encryptedBase64, "base64");
+      // Create encrypted buffer
+      const encryptedBuffer = Buffer.alloc(chunkSize);
+      let pos = 0;
+
+      // Read columns in order
+      for (let order = 0; order < keyLength; order++) {
+        const colIndex = columnOrder.indexOf(order);
+        for (let row = 0; row < numRows; row++) {
+          encryptedBuffer[pos++] = matrix[row][colIndex];
+        }
+      }
 
       res.setHeader(
         "Content-Disposition",
@@ -1354,24 +1382,58 @@ app.post("/decrypt-file/transposition", upload.single("file"), (req, res) => {
       res.send(Buffer.from(decryptedContent));
     } else {
       // Handle binary files
-      // Convert buffer to base64 string
-      const base64Content = file.buffer.toString("base64");
-
-      // Split the base64 into chunks that are multiples of the key length
+      const buffer = file.buffer;
       const keyLength = key.length;
-      const chunks = [];
-      for (let i = 0; i < base64Content.length; i += keyLength) {
-        chunks.push(base64Content.slice(i, i + keyLength));
+
+      // Create column order based on the key
+      const keyChars = key.toUpperCase().split("");
+      const charOrder = {};
+      const uniqueChars = [...new Set(keyChars)].sort();
+      uniqueChars.forEach((char, index) => {
+        charOrder[char] = index;
+      });
+      const columnOrder = keyChars.map((char) => charOrder[char]);
+
+      // Calculate column lengths
+      const numRows = Math.ceil(buffer.length / keyLength);
+      const colLens = Array(keyLength).fill(
+        Math.floor(buffer.length / keyLength)
+      );
+      const extraChars = buffer.length % keyLength;
+
+      // Distribute extra characters to columns
+      for (let i = 0; i < extraChars; i++) {
+        const colIndex = columnOrder.indexOf(i);
+        if (colIndex !== -1) {
+          colLens[colIndex]++;
+        }
       }
 
-      // Decrypt each chunk
-      const decryptedChunks = chunks.map((chunk) =>
-        transposeText(chunk, key, true)
-      );
-      const decryptedBase64 = decryptedChunks.join("");
+      // Fill columns
+      const cols = Array(keyLength)
+        .fill()
+        .map(() => []);
+      let pos = 0;
 
-      // Convert back to binary
-      const decryptedBuffer = Buffer.from(decryptedBase64, "base64");
+      for (let order = 0; order < keyLength; order++) {
+        const colIndex = columnOrder.indexOf(order);
+        const len = colLens[colIndex];
+        for (let i = 0; i < len; i++) {
+          cols[colIndex].push(buffer[pos++]);
+        }
+      }
+
+      // Reconstruct the original buffer
+      const decryptedBuffer = Buffer.alloc(buffer.length);
+      pos = 0;
+
+      for (let row = 0; row < numRows; row++) {
+        for (let col = 0; col < keyLength; col++) {
+          if (cols[col][row] !== undefined) {
+            decryptedBuffer[pos++] = cols[col][row];
+          }
+        }
+      }
 
       res.setHeader(
         "Content-Disposition",

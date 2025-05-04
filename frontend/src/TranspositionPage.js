@@ -12,10 +12,8 @@ export default function TranspositionPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState(null);
   const [fileResult, setFileResult] = useState("");
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [visualization, setVisualization] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [visualization, setVisualization] = useState(null);
 
   const validateInputs = () => {
     if (!plaintext.trim() && !file) {
@@ -211,20 +209,14 @@ export default function TranspositionPage() {
     formData.append("file", file);
     formData.append("key", key);
     try {
-      setIsDownloading(true);
-      setDownloadProgress(0);
+      setIsProcessing(true);
+      setError("");
 
       const res = await axios.post(
         "http://localhost:5000/encrypt-file/transposition",
         formData,
         {
           responseType: "blob",
-          onDownloadProgress: (progressEvent) => {
-            const percent = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total || 1)
-            );
-            setDownloadProgress(percent);
-          },
         }
       );
 
@@ -235,8 +227,7 @@ export default function TranspositionPage() {
     } catch (err) {
       setError("File encryption failed.");
     } finally {
-      setIsDownloading(false);
-      setDownloadProgress(0);
+      setIsProcessing(false);
     }
   };
 
@@ -246,20 +237,14 @@ export default function TranspositionPage() {
     formData.append("file", file);
     formData.append("key", key);
     try {
-      setIsDownloading(true);
-      setDownloadProgress(0);
+      setIsProcessing(true);
+      setError("");
 
       const res = await axios.post(
         "http://localhost:5000/decrypt-file/transposition",
         formData,
         {
           responseType: "blob",
-          onDownloadProgress: (progressEvent) => {
-            const percent = Math.round(
-              (progressEvent.loaded * 100) / (progressEvent.total || 1)
-            );
-            setDownloadProgress(percent);
-          },
         }
       );
 
@@ -270,8 +255,7 @@ export default function TranspositionPage() {
     } catch (err) {
       setError("File decryption failed.");
     } finally {
-      setIsDownloading(false);
-      setDownloadProgress(0);
+      setIsProcessing(false);
     }
   };
 
@@ -536,25 +520,41 @@ export default function TranspositionPage() {
             </button>
           </div>
           <div className="d-flex gap-2">
-            <button className="btn btn-outline-success" onClick={encryptFile}>
-              <FileText className="me-2" size={20} />
-              Encrypt File
+            <button
+              className="btn btn-outline-success"
+              onClick={encryptFile}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="me-2" size={20} />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FileText className="me-2" size={20} />
+                  Encrypt File
+                </>
+              )}
             </button>
-            <button className="btn btn-outline-warning" onClick={decryptFile}>
-              <FileText className="me-2" size={20} />
-              Decrypt File
+            <button
+              className="btn btn-outline-warning"
+              onClick={decryptFile}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="me-2" size={20} />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <FileText className="me-2" size={20} />
+                  Decrypt File
+                </>
+              )}
             </button>
           </div>
-          {isDownloading && (
-            <div className="progress my-3 w-100">
-              <div
-                className="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                style={{ width: `${downloadProgress}%` }}
-              >
-                {downloadProgress}%
-              </div>
-            </div>
-          )}
           {fileResult && (
             <a
               href={fileResult.url}

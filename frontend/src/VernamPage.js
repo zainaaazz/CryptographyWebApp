@@ -84,7 +84,6 @@ export default function VernamPage() {
     }
   };
   
-
   const generateKey = async (length) => {
     setError("");
     setMessage("");
@@ -207,7 +206,7 @@ export default function VernamPage() {
       const contentDisposition =
         response.headers["content-disposition"] ||
         response.headers["Content-Disposition"];
-      let filename =
+      let filename =file
         action === "encrypt" ? "encrypted.vernam" : "decrypted_output";
       if (contentDisposition && contentDisposition.includes("filename=")) {
         const match = contentDisposition.match(/filename="?([^"]+)"?/);

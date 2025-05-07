@@ -294,6 +294,7 @@ app.post("/encrypt-file/des", upload.single("file"), (req, res) => {
     return res.status(400).send("Invalid file or DES key");
 
   const cipher = crypto.createCipheriv("des-ede3", Buffer.from(key), null);
+
   const encrypted = Buffer.concat([cipher.update(file.buffer), cipher.final()]);
 
   res.setHeader(
@@ -386,46 +387,6 @@ function xorBuffer(buffer, keyBuffer) {
  *         description: Returns base64-encoded ciphertext
  */
 
-app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
-  const fileBuffer = req.file?.buffer;
-  const rawKey = req.body?.key;
-
-  if (!fileBuffer || !rawKey) {
-    console.error("❌ Missing file or key in request.");
-    return res.status(400).send("Missing file or key.");
-  }
-
-  const key = Buffer.from(rawKey, "latin1");
-
-  console.log("🔐 ENCRYPT FILE (VERNAM)");
-  console.log("📄 File size:", fileBuffer.length);
-  console.log("🔑 Key length:", key.length);
-  console.log("📂 File name:", req.file.originalname);
-
-  if (key.length !== fileBuffer.length) {
-    console.error("❌ Key and file size mismatch.");
-    return res
-      .status(400)
-      .send(
-        `Key must be the same length as the file. Received key length: ${key.length}, expected: ${fileBuffer.length}`
-      );
-  }
-
-  const encryptedBuffer = Buffer.alloc(fileBuffer.length);
-  for (let i = 0; i < fileBuffer.length; i++) {
-    encryptedBuffer[i] = fileBuffer[i] ^ key[i];
-  }
-
-  const originalName =
-    req.file.originalname.split(".").slice(0, -1).join(".") || "file";
-  const extension = req.file.originalname.split(".").pop();
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="${originalName} - VernamEncrypted.${extension}"`
-  );
-  res.setHeader("Content-Type", "application/octet-stream");
-  res.send(encryptedBuffer);
-});
 
 /**
  * @swagger
@@ -450,46 +411,6 @@ app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
  *         description: Returns decrypted plaintext
  */
 
-app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
-  const encryptedBuffer = req.file?.buffer;
-  const rawKey = req.body?.key;
-
-  if (!encryptedBuffer || !rawKey) {
-    console.error("❌ Missing file or key in request.");
-    return res.status(400).send("Missing file or key.");
-  }
-
-  const key = Buffer.from(rawKey, "latin1");
-
-  console.log("🔐 DECRYPT FILE (VERNAM)");
-  console.log("📄 File size:", encryptedBuffer.length);
-  console.log("🔑 Key length:", key.length);
-  console.log("📂 File name:", req.file.originalname);
-
-  if (key.length !== encryptedBuffer.length) {
-    console.error("❌ Key and file size mismatch.");
-    return res
-      .status(400)
-      .send(
-        `Key must be the same length as the file. Received key length: ${key.length}, expected: ${encryptedBuffer.length}`
-      );
-  }
-
-  const decryptedBuffer = Buffer.alloc(encryptedBuffer.length);
-  for (let i = 0; i < encryptedBuffer.length; i++) {
-    decryptedBuffer[i] = encryptedBuffer[i] ^ key[i];
-  }
-
-  const originalName =
-    req.file.originalname.split(".").slice(0, -1).join(".") || "file";
-  const extension = req.file.originalname.split(".").pop();
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename="${originalName} - VernamDecrypted.${extension}"`
-  );
-  res.setHeader("Content-Type", "application/octet-stream");
-  res.send(decryptedBuffer);
-});
 
 /**
  * @swagger
@@ -516,7 +437,7 @@ app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
  */
 
 app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
-  const fileBuffer = req.file.buffer;
+  const fileBuffer = req.file.buffer; //Retrieves the raw binary content of the uploaded file.
   const key = Buffer.from(req.body.key, "latin1");
 
   if (key.length !== fileBuffer.length) {
@@ -564,9 +485,10 @@ app.post("/encrypt-file/vernam", upload.single("file"), (req, res) => {
  *         description: Returns decrypted file
  */
 
+//VERNAM DECRYPT FILE
 app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
-  const encryptedBuffer = req.file.buffer;
-  const key = Buffer.from(req.body.key, "latin1");
+  const encryptedBuffer = req.file.buffer; //Retrieves the raw binary content of the uploaded encrypted file.
+  const key = Buffer.from(req.body.key, "latin1"); //converts key into byte buffer using latin1
 
   if (key.length !== encryptedBuffer.length) {
     return res.status(400).send("Key must be the same length as the file.");
@@ -589,6 +511,7 @@ app.post("/decrypt-file/vernam", upload.single("file"), (req, res) => {
   res.send(decryptedBuffer);
 });
 
+//VERNAM GENERATE KEY
 app.post("/generate-vernam-key", (req, res) => {
   console.log("Body received:", req.body);
 
@@ -722,6 +645,7 @@ app.post("/decrypt/vigenere", (req, res) => {
  *         description: Returns encrypted file
  */
 
+//VIGENERE ENCRYPT FILE
 app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
@@ -759,6 +683,7 @@ app.post("/encrypt-file/vigenere", upload.single("file"), (req, res) => {
  *         description: Returns decrypted file
  */
 
+//VIGENERE DECRYPT FILE
 app.post("/decrypt-file/vigenere", upload.single("file"), (req, res) => {
   const { key } = req.body;
   const file = req.file;
@@ -858,9 +783,12 @@ app.post("/decrypt/caesar", (req, res) => {
   res.send(decrypted);
 });
 
+
+//handles both encryption and decryption of file buffers using XOR, transposition logic, and noise injection.
 function mutateBuffer(buffer, key, decrypt = false) {
   const mutated = [];
-  const interval = (key.length % 50) + 50;
+  const interval = (key.length % 50) + 50; //Calculates how often to insert noise characters.
+  //Ensures a noise character is added every 50–99 bytes, depending on key length.
   const noiseChar = 42;
 
   console.log(`🔧 Mode: ${decrypt ? "Decrypt" : "Encrypt"}`);
@@ -869,14 +797,16 @@ function mutateBuffer(buffer, key, decrypt = false) {
   console.log(`📐 Noise interval: ${interval}`);
 
   if (!decrypt) {
-    for (let i = 0; i < buffer.length; i++) {
-      const byte = buffer[i] ^ key.charCodeAt(i % key.length);
-      mutated.push(byte);
-      if ((i + 1) % interval === 0) mutated.push(noiseChar);
+    for (let i = 0; i < buffer.length; i++) { //loops through every byte in file buffer
+      const byte = buffer[i] ^ key.charCodeAt(i % key.length); 
+      //XOR encryption betw byte and corr char in the key (repeating the key if needed).
+
+      mutated.push(byte);//stores encrypted byte in array.
+      if ((i + 1) % interval === 0) mutated.push(noiseChar); //insert noise after every interval
     }
-  } else {
+  } else {//runs when decrypt = true
     let skip = 0;
-    for (let i = 0; i < buffer.length; i++) {
+    for (let i = 0; i < buffer.length; i++) { 
       if ((i + 1) % (interval + 1) === 0) continue;
       const byte = buffer[i] ^ key.charCodeAt(skip % key.length);
       mutated.push(byte);
@@ -891,30 +821,59 @@ function mutateBuffer(buffer, key, decrypt = false) {
 app.post("/encrypt/custom", (req, res) => {
   const { plaintext, key } = req.body;
   if (!plaintext || !key) return res.status(400).send("Missing data.");
-  let substituted = plaintext.replace(/[a-z]/gi, (c) =>
-    String.fromCharCode(c.charCodeAt(0) ^ 5)
-  );
+
+  // Step 1: Substitution using XOR with each key character
+  let substituted = '';
+  for (let i = 0; i < plaintext.length; i++) {
+    const charCode = plaintext.charCodeAt(i);
+    const keyChar = key[i % key.length];
+    const xorChar = String.fromCharCode(charCode ^ keyChar.charCodeAt(0));
+    substituted += xorChar;
+  }
+
+  // Step 2: Transposition (reverse string)
   let transposed = substituted.split("").reverse().join("");
-  let noisy = transposed
-    .split("")
-    .map((c, i) => ((i + 1) % ((key.length % 3) + 2) === 0 ? c + "*" : c))
-    .join("");
+
+  // Step 3: Noise insertion AFTER transposition
+  const noiseInterval = (key.length % 3) + 2; //noise interval depends on the length of the key. 
+  // largest possible value from (key.length % 3) is 2 - noise interval will always be 2, 3, or 4
+  let noisy = '';
+  for (let i = 0; i < transposed.length; i++) {
+    noisy += transposed[i];
+    if ((i + 1) % noiseInterval === 0) {
+      noisy += '*'; 
+    }
+  }
+  // Base64 encode final output
   res.json({ ciphertext: Buffer.from(noisy).toString("base64") });
 });
+
 
 app.post("/decrypt/custom", (req, res) => {
   const { ciphertext, key } = req.body;
   if (!ciphertext || !key) return res.status(400).send("Missing data.");
+
   try {
+    // Step 1: Base64 decode
     let decoded = Buffer.from(ciphertext, "base64").toString();
+
+    // Step 2: Remove noise
     let denoised = decoded.replace(/\*/g, "");
-    let original = denoised
-      .split("")
-      .reverse()
-      .join("")
-      .replace(/./g, (c) => String.fromCharCode(c.charCodeAt(0) ^ 5));
+
+    // Step 3: Reverse transposition
+    let transposed = denoised.split("").reverse().join("");
+
+    // Step 4: XOR with key characters
+    let original = '';
+    for (let i = 0; i < transposed.length; i++) {
+      const xorChar = String.fromCharCode(
+        transposed.charCodeAt(i) ^ key.charCodeAt(i % key.length)
+      );
+      original += xorChar;
+    }
+
     res.json({ plaintext: original });
-  } catch {
+  } catch (err) {
     res.status(400).send("Decryption failed.");
   }
 });
@@ -930,9 +889,7 @@ app.post("/encrypt-file/custom", upload.single("file"), (req, res) => {
   console.log(`🚀 Encrypting file: ${file.originalname} (${file.size} bytes)`);
 
   try {
-    const encrypted = mutateBuffer(file.buffer, key, false);
-
-    // ✅ SET HEADERS ONCE — NO DUPLICATES
+    const encrypted = mutateBuffer(file.buffer, key, false); //false = encryption
     res.set({
       "Content-Disposition": `attachment; filename="encrypted_${file.originalname}"`,
       "Content-Type": "application/octet-stream",
@@ -956,10 +913,10 @@ app.post("/decrypt-file/custom", upload.single("file"), (req, res) => {
   console.log(`🔓 Decrypting file: ${file.originalname} (${file.size} bytes)`);
 
   try {
-    const decrypted = mutateBuffer(file.buffer, key, true);
+    const decrypted = mutateBuffer(file.buffer, key, true); //true = decryption
 
-    res.set({
-      "Content-Disposition": `attachment; filename="decrypted_${file.originalname}"`,
+    res.set({ //Sets HTTP response headers
+      "Content-Disposition": `attachment; filename="decrypted_${file.originalname}"`, //"Content-Disposition": tells the browser to download the response as a file.
       "Content-Type": "application/octet-stream",
     });
 

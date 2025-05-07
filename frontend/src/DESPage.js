@@ -40,7 +40,7 @@ export default function DESPage() {
 
   return (
     <div className="container mt-4">
-      <h1 className="text-light text-center">DES - Data Encryption Standard</h1>
+      <h1 className="text-light text-center">TripleDES - Data Encryption Standard</h1>
       <p className="text-secondary text-center">
         DES uses a 24-character key with Triple-DES encryption to secure sensitive data.
       </p>

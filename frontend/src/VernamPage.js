@@ -50,11 +50,13 @@ export default function VernamPage() {
       return setError("Key must be the same length as plaintext.");
     }
   
+    //actual encryption happens here 
+    //plaintext convert to ascii --> XOR with corresponding character in key --> convert back into character --> 
     const encrypted = Array.from(plaintext)
       .map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ realKey.charCodeAt(i)))
-      .join("");
+      .join(""); //joins the encrypted characters into a single encrypted string
   
-    const base64 = btoa(encrypted);
+    const base64 = btoa(encrypted); //btoa() converts the encrypted string into a Base64-encoded string.
     setCiphertext(base64);
     setMessage("✔ Text encrypted successfully.");
   };
@@ -68,13 +70,14 @@ export default function VernamPage() {
     }
   
     try {
-      const decoded = atob(ciphertext);
+      const decoded = atob(ciphertext); //Converts the Base64-encoded ciphertext back into its original encrypted string using atob()
       if (decoded.length !== realKey.length) {
         return setError("Key must be the same length as decoded ciphertext.");
       }
   
-      const decrypted = Array.from(decoded)
-        .map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ realKey.charCodeAt(i)))
+      const decrypted = Array.from(decoded) //encrypted string into an array of characters 
+        .map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ realKey.charCodeAt(i))) 
+        //get ascii --> XOR corr --> converts num back into char
         .join("");
   
       setDecryptedText(decrypted);

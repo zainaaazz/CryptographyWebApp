@@ -789,6 +789,7 @@ function mutateBuffer(buffer, key, decrypt = false) {
   const mutated = [];
   const interval = (key.length % 50) + 50; //Calculates how often to insert noise characters.
   //Ensures a noise character is added every 50–99 bytes, depending on key length.
+  //keeps overhead from noise insertion - file size - trade off betw file size and sec
   const noiseChar = 42;
 
   console.log(`🔧 Mode: ${decrypt ? "Decrypt" : "Encrypt"}`);

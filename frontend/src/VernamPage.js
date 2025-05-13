@@ -43,6 +43,8 @@ export default function VernamPage() {
   };
 
   const handleTextEncryption = () => {
+    //front end sensitive data is exposed to broswer before its encrypted - like cross site scripting
+    //not ideal
     setError("");
     setMessage("");
   
@@ -50,13 +52,12 @@ export default function VernamPage() {
       return setError("Key must be the same length as plaintext.");
     }
   
-    //actual encryption happens here 
     //plaintext convert to ascii --> XOR with corresponding character in key --> convert back into character --> 
     const encrypted = Array.from(plaintext)
       .map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ realKey.charCodeAt(i)))
       .join(""); //joins the encrypted characters into a single encrypted string
   
-    const base64 = btoa(encrypted); //btoa() converts the encrypted string into a Base64-encoded string.
+    const base64 = btoa(encrypted); //btoa() converts the encrypted string into a Base64-encoded string. for like printable characters
     setCiphertext(base64);
     setMessage("✔ Text encrypted successfully.");
   };
